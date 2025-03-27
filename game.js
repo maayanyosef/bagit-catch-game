@@ -228,7 +228,7 @@
     function jump() {
       if (!cat.isJumping) {
         cat.isJumping = true;
-        cat.velocityY = -cat.jumpHeight / 10;
+        cat.velocityY = -cat.jumpHeight * 2;
       }
     }
 
