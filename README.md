@@ -29,35 +29,10 @@ Bagit Catch Game is a fun and interactive game where you control a cat to catch 
 5. **Catch Baguettes**: Move the cat to catch falling baguettes.
 6. **Landscape Mode**: For the best gaming experience, rotate your device to landscape mode.
 
-## Features
-
-- **Interactive Gameplay**: Control the cat with keyboard inputs or touch controls.
-- **Mobile Optimization**: Fully responsive design that works on all screen sizes.
-- **Touch Controls**: Dedicated on-screen buttons for mobile devices.
-- **Power-ups System**: Collect special items for gameplay advantages.
-- **Dynamic Difficulty**: The game gets harder as you catch more baguettes.
-- **Score Tracking**: Keep track of your score and stars.
-- **Sound Effects**: Enjoy sound effects when catching baguettes and power-ups.
-- **Visual Feedback**: Point popups and animations when catching items.
-- **Pause Functionality**: Pause the game anytime with dedicated controls.
-- **Dark Mode**: Toggle between light and dark themes for comfortable play.
-- **Responsive Leaderboard**: View the top scores from both desktop and mobile players.
-- **Orientation Support**: Landscape mode optimized for improved gaming experience on mobile.
-
-## Mobile Optimization
-
-The game has been fully optimized for mobile devices with:
-- Responsive design that adapts to different screen sizes
-- Touch-friendly controls with on-screen buttons
-- Adjusted game mechanics for better mobile experience
-- Orientation detection with landscape mode suggestion
-- Improved performance for mobile browsers
-- Touch event handling to prevent unwanted browser behaviors
-- Audio optimization for mobile devices
 
 ## Screenshots
 
-![Game Screenshot](https://bagit.explorium.ninja/screenshot.png)
+![Game Screenshot](https://bagit.explorium.ninja/assets/screenshot.png)
 
 ## Play the Game
 
