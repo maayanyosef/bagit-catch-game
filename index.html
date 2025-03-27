@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
+  <!-- Add additional meta tag to prevent zooming on iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/x-icon" href="assets/apple-touch-icon.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="stylesheet" href="css/style.css">
@@ -36,6 +38,9 @@
     <button id="jumpButton" class="controlButton">↑</button>
     <button id="rightButton" class="controlButton">→</button>
   </div>
+
+  <!-- Add the missing orientationWarning div -->
+  <div id="orientationWarning" style="display: none;"></div>
 
   <audio id="catchSound" src="assets/sound.mp3"></audio>
   <script src="game.js"></script>

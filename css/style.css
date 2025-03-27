@@ -87,6 +87,11 @@
       border: none;
       border-radius: 10px;
       margin-bottom: 20px;
+      /* Ensure better touch handling on mobile */
+      touch-action: manipulation;
+      -webkit-appearance: none;
+      -webkit-touch-callout: none;
+      user-select: none;
     }
     @media (max-width: 480px) {
       #startButton {
@@ -189,6 +194,8 @@
       user-select: none;
       -webkit-user-select: none;
       touch-action: manipulation;
+      -webkit-appearance: none;
+      -webkit-touch-callout: none;
     }
     @media (max-width: 480px) {
       .controlButton {

@@ -79,9 +79,9 @@
         cat.height = 90;
       }
 
-      if (isMobile && window.innerHeight > window.innerWidth) {
-          // We can just set this to 'none' since you don't want the orientation warning
-          orientationWarning.style.display = 'none';
+      // Check if orientationWarning exists before accessing its style
+      if (orientationWarning && isMobile && window.innerHeight > window.innerWidth) {
+        orientationWarning.style.display = 'none';
       }
     } // End of resizeCanvas
 
@@ -97,18 +97,21 @@
      * 3) Helper for Both Touch & Click
      **********************************************/
     function addTouchEventHandler(element, callback) {
-      element.addEventListener(
-        'touchstart',
-        function (e) {
-          e.preventDefault();
-          callback();
-        },
-        { passive: false }
-      );
-      element.addEventListener('click', callback);
+      // Add touchstart event with proper options
+      element.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        callback();
+      }, { passive: false });
+      
+      // Add click event as fallback
+      element.addEventListener('click', function(e) {
+        e.preventDefault();
+        callback();
+      });
     }
 
-    // Attach event listeners to start and stop buttons
+    // Attach event listeners to start and stop buttons with the improved handler
     addTouchEventHandler(startButton, startGame);
     addTouchEventHandler(stopButton, stopGame);
 
@@ -246,13 +249,28 @@
      **********************************************/
     function startGame() {
       console.log("Start game button clicked");
-      orientationWarning.style.display = 'none';
+      // Check if orientationWarning exists before accessing its style
+      if (orientationWarning) {
+        orientationWarning.style.display = 'none';
+      }
+
+      // Debug logging to help troubleshoot mobile issues
+      console.log("Device: " + (isMobile ? "Mobile" : "Desktop"));
+      
+      // Hide orientation warning
+      if (orientationWarning) {
+        orientationWarning.style.display = 'none';
+      }
 
       const nickname = nicknameInput.value.trim();
       if (!nickname) {
         alert('Please enter your nickname!');
         return;
       }
+
+      // Additional logging
+      console.log("Nickname entered: " + nickname);
+      console.log("Starting game with UI changes...");
 
       // Set up game UI
       body.classList.remove('start');
@@ -261,7 +279,9 @@
       stopButton.style.display = 'block';
       scoreboard.style.display = 'block';
 
+      // Show mobile controls if on mobile
       if (isMobile) {
+        console.log("Setting up mobile controls");
         mobileControls.style.display = 'flex';
       }
 
@@ -563,7 +583,8 @@
       }
     }
 
-    document.addEventListener('touchstart', unlockAudio, { once: true });
+    // Make sure these event listeners are properly set up
+    document.addEventListener('touchstart', unlockAudio, { once: true, passive: false });
     document.addEventListener('click', unlockAudio, { once: true });
     document.addEventListener('keydown', unlockAudio, { once: true });
 
@@ -601,3 +622,4 @@
         gameInterval = setInterval(updateGame, 1000 / 60);
       }
     });
+
