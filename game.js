@@ -405,32 +405,36 @@
           catRect.top < baguetteRect.bottom &&
           catRect.bottom > baguetteRect.top
         ) {
-          document.body.removeChild(baguette);
-          baguettes.splice(index, 1);
-          score++;
-          scoreElement.textContent = score;
+          // Add a check to prevent sound playing if the baguette is already being removed
+          if (!baguette.dataset.isColliding) {
+            baguette.dataset.isColliding = 'true';
+            
+            // Play catch sound - simplified to avoid duplicate plays
+            try {
+              // Don't clone the sound, just play the original with reset
+              catchSound.currentTime = 0;
+              catchSound.volume = 0.2;
+              catchSound.play().catch(e => console.log('Audio play prevented:', e));
+            } catch (err) {
+              console.log('Error playing sound:', err);
+            }
 
-          // Play catch sound
-          try {
-            const soundClone = catchSound.cloneNode();
-            soundClone.volume = 0.2;
-            soundClone.play().catch((e) =>
-              console.log('Audio play prevented:', e)
-            );
-          } catch (err) {
-            console.log('Error playing sound:', err);
-          }
+            document.body.removeChild(baguette);
+            baguettes.splice(index, 1);
+            score++;
+            scoreElement.textContent = score;
 
-          // Star logic
-          if (score % 10 === 0) {
-            stars++;
-            starsElement.textContent = stars;
-            showStarImage();
-          }
-          if (score % 100 === 0) {
-            stars += 2;
-            starsElement.textContent = stars;
-            showStarImage();
+            // Star logic
+            if (score % 10 === 0) {
+              stars++;
+              starsElement.textContent = stars;
+              showStarImage();
+            }
+            if (score % 100 === 0) {
+              stars += 2;
+              starsElement.textContent = stars;
+              showStarImage();
+            }
           }
         }
       });
@@ -570,12 +574,17 @@
         unlockAudio.play().catch((e) =>
           console.log('Audio play prevented:', e)
         );
+        
+        // Don't play the catch sound during unlock, just set volume
         catchSound.volume = 0.01;
-        catchSound
-          .play()
+        
+        // Only use a silent method to unlock, don't actually play the catch sound
+        catchSound.muted = true;
+        catchSound.play()
           .then(() => {
             catchSound.pause();
             catchSound.currentTime = 0;
+            catchSound.muted = false;
           })
           .catch((e) => console.log('Main audio unlock failed:', e));
       } catch (err) {
