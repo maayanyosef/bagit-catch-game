@@ -1,0 +1,603 @@
+    /**********************************************
+     * 1) Declare Variables Before Using Them
+     **********************************************/
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const scoreboard = document.getElementById('scoreboard');
+    const startButton = document.getElementById('startButton');
+    const stopButton = document.getElementById('stopButton');
+    const starImage = document.getElementById('starImage');
+    const nicknameInput = document.getElementById('nicknameInput');
+    const leaderboard = document.getElementById('leaderboard');
+    const timeElement = document.getElementById('time');
+    const scoreElement = document.getElementById('score');
+    const starsElement = document.getElementById('stars');
+    const catchSound = document.getElementById('catchSound');
+    const body = document.body;
+    const mobileControls = document.getElementById('mobileControls');
+    const leftButton = document.getElementById('leftButton');
+    const rightButton = document.getElementById('rightButton');
+    const jumpButton = document.getElementById('jumpButton');
+    const gameControls = document.getElementById('gameControls');
+    const orientationWarning = document.getElementById('orientationWarning');
+
+    // Detect mobile devices
+    const isMobile =
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+
+    // Global game variables
+    let score = 0;
+    let stars = 0;
+    let time = 60;
+    let gameInterval;
+    let baguettes = [];
+    let endGameTriggered = false;
+
+    // Cat object declared BEFORE usage in resizeCanvas
+    let cat = {
+      x: canvas.width / 2,
+      y: canvas.height - 150,
+      width: 120,
+      height: 90,
+      isJumping: false,
+      jumpHeight: canvas.height / 4,
+      initialY: canvas.height - 150,
+      velocityY: 0,
+      gravity: 1.5,
+      speed: isMobile ? 8 : 10
+    };
+
+    // Adjust cat size for small screens
+    if (window.innerWidth <= 480) {
+      cat.width = 80;
+      cat.height = 60;
+    }
+
+    /**********************************************
+     * 2) Resize Canvas Function
+     **********************************************/
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      // Adjust cat position
+      cat.initialY = canvas.height - 150;
+      if (!cat.isJumping) {
+        cat.y = cat.initialY;
+      }
+      // Responsive cat sizing
+      if (window.innerWidth <= 480) {
+        cat.width = 80;
+        cat.height = 60;
+      } else {
+        cat.width = 120;
+        cat.height = 90;
+      }
+
+      if (isMobile && window.innerHeight > window.innerWidth) {
+          // We can just set this to 'none' since you don't want the orientation warning
+          orientationWarning.style.display = 'none';
+      }
+    } // End of resizeCanvas
+
+    // Call resizeCanvas immediately
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', resizeCanvas);
+
+    const catImg = new Image();
+    catImg.src = 'https://bagit.explorium.ninja/assets/github.png';
+
+    /**********************************************
+     * 3) Helper for Both Touch & Click
+     **********************************************/
+    function addTouchEventHandler(element, callback) {
+      element.addEventListener(
+        'touchstart',
+        function (e) {
+          e.preventDefault();
+          callback();
+        },
+        { passive: false }
+      );
+      element.addEventListener('click', callback);
+    }
+
+    // Attach event listeners to start and stop buttons
+    addTouchEventHandler(startButton, startGame);
+    addTouchEventHandler(stopButton, stopGame);
+
+    // Jump on canvas click or touch
+    canvas.addEventListener('click', jump);
+    canvas.addEventListener(
+      'touchstart',
+      function (e) {
+        e.preventDefault();
+        jump();
+      },
+      { passive: false }
+    );
+
+    // Desktop controls
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'ArrowLeft') {
+        moveLeft();
+      } else if (event.key === 'ArrowRight') {
+        moveRight();
+      } else if (event.key === ' ' || event.key === 'ArrowUp') {
+        jump();
+      }
+    });
+
+    // Mouse move on desktop
+    document.addEventListener('mousemove', function (event) {
+      if (!isMobile) {
+        cat.x = event.clientX - cat.width / 2;
+        cat.x = Math.max(0, Math.min(cat.x, canvas.width - cat.width));
+      }
+    });
+
+    // Touch move on non-mobile? (Unlikely, but kept for completeness)
+    document.addEventListener(
+      'touchmove',
+      function (event) {
+        if (!isMobile) {
+          const touch = event.touches[0];
+          cat.x = touch.clientX - cat.width / 2;
+          cat.x = Math.max(0, Math.min(cat.x, canvas.width - cat.width));
+          event.preventDefault();
+        }
+      },
+      { passive: false }
+    );
+
+    // Mobile controls
+    if (isMobile) {
+      let leftInterval, rightInterval;
+      jumpButton.addEventListener(
+        'touchstart',
+        function (e) {
+          e.preventDefault();
+          jump();
+        },
+        { passive: false }
+      );
+      leftButton.addEventListener(
+        'touchstart',
+        function (e) {
+          e.preventDefault();
+          clearInterval(leftInterval);
+          leftInterval = setInterval(() => {
+            moveLeft();
+          }, 16);
+        },
+        { passive: false }
+      );
+      leftButton.addEventListener(
+        'touchend',
+        function (e) {
+          e.preventDefault();
+          clearInterval(leftInterval);
+        },
+        { passive: false }
+      );
+      rightButton.addEventListener(
+        'touchstart',
+        function (e) {
+          e.preventDefault();
+          clearInterval(rightInterval);
+          rightInterval = setInterval(() => {
+            moveRight();
+          }, 16);
+        },
+        { passive: false }
+      );
+      rightButton.addEventListener(
+        'touchend',
+        function (e) {
+          e.preventDefault();
+          clearInterval(rightInterval);
+        },
+        { passive: false }
+      );
+      document.addEventListener('touchend', function () {
+        clearInterval(leftInterval);
+        clearInterval(rightInterval);
+      });
+    }
+
+    /**********************************************
+     * 4) Movement & Game Functions
+     **********************************************/
+    function moveLeft() {
+      cat.x -= cat.speed;
+      cat.x = Math.max(0, cat.x);
+    }
+    function moveRight() {
+      cat.x += cat.speed;
+      cat.x = Math.min(cat.x, canvas.width - cat.width);
+    }
+    function jump() {
+      if (!cat.isJumping) {
+        cat.isJumping = true;
+        cat.velocityY = -cat.jumpHeight / 10;
+      }
+    }
+
+    function updateCat() {
+      if (cat.isJumping) {
+        cat.y += cat.velocityY;
+        cat.velocityY += cat.gravity;
+        if (cat.y > cat.initialY) {
+          cat.y = cat.initialY;
+          cat.isJumping = false;
+          cat.velocityY = 0;
+        }
+      }
+    }
+
+    /**********************************************
+     * 5) Start & Stop Game
+     **********************************************/
+    function startGame() {
+      console.log("Start game button clicked");
+      orientationWarning.style.display = 'none';
+
+      const nickname = nicknameInput.value.trim();
+      if (!nickname) {
+        alert('Please enter your nickname!');
+        return;
+      }
+
+      // Set up game UI
+      body.classList.remove('start');
+      gameControls.style.display = 'none';
+      leaderboard.style.display = 'none';
+      stopButton.style.display = 'block';
+      scoreboard.style.display = 'block';
+
+      if (isMobile) {
+        mobileControls.style.display = 'flex';
+      }
+
+      // Reset game variables
+      score = 0;
+      stars = 0;
+      time = 60;
+      timeElement.textContent = time;
+      scoreElement.textContent = score;
+      starsElement.textContent = stars;
+      cat.y = cat.initialY;
+      cat.isJumping = false;
+      cat.velocityY = 0;
+      endGameTriggered = false;
+
+      // Start main game loop
+      gameInterval = setInterval(updateGame, 1000 / 60);
+
+      // Countdown timer
+      const timerInterval = setInterval(() => {
+        if (time > 0) {
+          time--;
+          timeElement.textContent = time;
+        } else if (!endGameTriggered) {
+          clearInterval(timerInterval);
+          endGame(nickname);
+        }
+      }, 1000);
+    }
+
+    function stopGame() {
+      clearInterval(gameInterval);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      stopButton.style.display = 'none';
+      scoreboard.style.display = 'none';
+      mobileControls.style.display = 'none';
+      score = 0;
+      stars = 0;
+      clearBaguettes();
+      body.classList.add('start');
+      gameControls.style.display = 'flex';
+    }
+
+    /**********************************************
+     * 6) Game Loop: updateGame, collisions, etc.
+     **********************************************/
+    function updateGame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawSidewalk();
+      updateCat();
+      drawCat();
+      updateBaguettes();
+      checkCollisions();
+      checkMissedBaguettes();
+    }
+
+    function drawCat() {
+      ctx.drawImage(catImg, cat.x, cat.y, cat.width, cat.height);
+    }
+
+    function drawSidewalk() {
+      ctx.fillStyle = '#a9a9a9';
+      ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+    }
+
+    function spawnBaguette() {
+      const x = Math.random() * (canvas.width - 50);
+      const speedX = (Math.random() - 0.5) * 4;
+      const baguette = document.createElement('img');
+      baguette.src =
+        'https://emoji.slack-edge.com/T8UPK0YQ3/bagit/130f01dbd0e3f77d.gif';
+      baguette.classList.add('baguette');
+      baguette.style.left = `${x}px`;
+      baguette.style.top = `0px`;
+
+      const speedYBase = isMobile ? 1.5 : 2;
+      const speedYAdjust = canvas.height > 800 ? 1.2 : 1;
+      baguette.dataset.speedY = speedYBase * speedYAdjust;
+      baguette.dataset.speedX = speedX;
+      document.body.appendChild(baguette);
+      baguettes.push(baguette);
+    }
+
+    function updateBaguettes() {
+      // Increase spawn rate with score
+      const spawnRate = Math.min(0.03, 0.01 + score / 500);
+      if (Math.random() < spawnRate) spawnBaguette();
+
+      baguettes.forEach((baguette) => {
+        const speedY = parseFloat(baguette.dataset.speedY);
+        const speedX = parseFloat(baguette.dataset.speedX);
+        baguette.style.top = `${parseFloat(baguette.style.top) + speedY}px`;
+        baguette.style.left = `${parseFloat(baguette.style.left) + speedX}px`;
+
+        // Use computed width to handle collisions properly
+        const baguetteWidth = parseFloat(
+          getComputedStyle(baguette).width
+        );
+        if (
+          parseFloat(baguette.style.left) < 0 ||
+          parseFloat(baguette.style.left) >
+            canvas.width - baguetteWidth
+        ) {
+          baguette.dataset.speedX = -speedX;
+        }
+      });
+    }
+
+    function checkCollisions() {
+      baguettes.forEach((baguette, index) => {
+        const baguetteRect = baguette.getBoundingClientRect();
+        const catRect = {
+          left: cat.x,
+          top: cat.y,
+          right: cat.x + cat.width,
+          bottom: cat.y + cat.height
+        };
+        if (
+          catRect.left < baguetteRect.right &&
+          catRect.right > baguetteRect.left &&
+          catRect.top < baguetteRect.bottom &&
+          catRect.bottom > baguetteRect.top
+        ) {
+          document.body.removeChild(baguette);
+          baguettes.splice(index, 1);
+          score++;
+          scoreElement.textContent = score;
+
+          // Play catch sound
+          try {
+            const soundClone = catchSound.cloneNode();
+            soundClone.volume = 0.3;
+            soundClone.play().catch((e) =>
+              console.log('Audio play prevented:', e)
+            );
+          } catch (err) {
+            console.log('Error playing sound:', err);
+          }
+
+          // Star logic
+          if (score % 10 === 0) {
+            stars++;
+            starsElement.textContent = stars;
+            showStarImage();
+          }
+          if (score % 100 === 0) {
+            stars += 2;
+            starsElement.textContent = stars;
+            showStarImage();
+          }
+        }
+      });
+    }
+
+    function checkMissedBaguettes() {
+      baguettes.forEach((baguette, index) => {
+        if (parseFloat(baguette.style.top) > canvas.height - 30) {
+          document.body.removeChild(baguette);
+          baguettes.splice(index, 1);
+          score--;
+          score = Math.max(0, score);
+          scoreElement.textContent = score;
+        }
+      });
+    }
+
+    function clearBaguettes() {
+      baguettes.forEach((baguette) => {
+        if (document.body.contains(baguette)) {
+          document.body.removeChild(baguette);
+        }
+      });
+      baguettes = [];
+    }
+
+    function showStarImage() {
+      starImage.style.display = 'block';
+      setTimeout(() => {
+        starImage.style.display = 'none';
+      }, 1000);
+    }
+
+    /**********************************************
+     * 7) End Game & Leaderboard
+     **********************************************/
+    function endGame(nickname) {
+      if (endGameTriggered) return;
+      endGameTriggered = true;
+
+      clearInterval(gameInterval);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      stopButton.style.display = 'none';
+      scoreboard.style.display = 'none';
+      mobileControls.style.display = 'none';
+      clearBaguettes();
+      body.classList.add('start');
+      gameControls.style.display = 'flex';
+
+      const gameData = {
+        event: 'Game Ended',
+        details: {
+          nickname: nickname,
+          score: score,
+          stars: stars,
+          platform: isMobile ? 'mobile' : 'desktop'
+        }
+      };
+
+      fetch(
+        'https://script.google.com/macros/s/AKfycbw9dyf_wJn2KFMGSV8VeslPCZHUSLufYdhXM1bPKlhik7hcjgTicKykdLFsB9qTDsxmQw/exec',
+        {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(gameData)
+        }
+      )
+        .then(() => {
+          showLeaderboard();
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+          showLeaderboard();
+        });
+    }
+
+    function showLeaderboard() {
+      leaderboard.innerHTML =
+        '<p style="text-align: center;">Loading leaderboard...</p>';
+      leaderboard.style.display = 'block';
+      fetch(
+        'https://script.google.com/macros/s/AKfycbw9dyf_wJn2KFMGSV8VeslPCZHUSLufYdhXM1bPKlhik7hcjgTicKykdLFsB9qTDsxmQw/exec'
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          let leaderboardHTML = `
+            <h2 style="text-align: center; color: #FF5722; margin-bottom: 20px;">Leaderboard</h2>
+            <table>
+              <thead>
+                <tr style="background-color: #FF5722; color: white;">
+                  <th>Nickname</th>
+                  <th>Score</th>
+                  <th>Stars</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          data.forEach((row) => {
+            const timestamp = row[3] ? row[3].split(' ')[0] : '';
+            leaderboardHTML += `
+              <tr>
+                <td>${row[0]}</td>
+                <td>${row[1]}</td>
+                <td>${row[2]}</td>
+                <td>${timestamp}</td>
+              </tr>
+            `;
+          });
+          leaderboardHTML += `
+              </tbody>
+            </table>`;
+          leaderboard.innerHTML = leaderboardHTML;
+        })
+        .catch((error) => {
+          console.error('Error fetching leaderboard:', error);
+          leaderboard.innerHTML =
+            '<p style="text-align: center; color: red;">Failed to load leaderboard. Please try again later.</p>';
+        });
+    }
+
+    /**********************************************
+     * 8) Audio Unlock for iOS
+     **********************************************/
+    function unlockAudio() {
+      console.log("Unlocking audio context");
+      try {
+        const unlockAudio = document.createElement('audio');
+        unlockAudio.setAttribute(
+          'src',
+          'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjMyLjEwNAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABEgD///////////////////////////////////////////8AAAA8TEFNRTMuMTAwAwAAAAAAABEgJARgTQAB4AAAESJMYLQTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+        );
+        unlockAudio.volume = 0.01;
+        unlockAudio.play().catch((e) =>
+          console.log('Audio play prevented:', e)
+        );
+        catchSound.volume = 0.01;
+        catchSound
+          .play()
+          .then(() => {
+            catchSound.pause();
+            catchSound.currentTime = 0;
+          })
+          .catch((e) => console.log('Main audio unlock failed:', e));
+      } catch (err) {
+        console.error('Error initializing audio:', err);
+      }
+    }
+
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    document.addEventListener('click', unlockAudio, { once: true });
+    document.addEventListener('keydown', unlockAudio, { once: true });
+
+    /**********************************************
+     * 9) Misc Touchmove Prevent Zoom
+     **********************************************/
+    document.addEventListener(
+      'touchmove',
+      function (event) {
+        if (event.scale !== 1) {
+          event.preventDefault();
+        }
+      },
+      { passive: false }
+    );
+
+    /**********************************************
+     * 10) Window Load & Visibility
+     **********************************************/
+    window.addEventListener('load', function () {
+      console.log("Window loaded, initializing game environment");
+      resizeCanvas();
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden && gameInterval) {
+        // Pause game
+        clearInterval(gameInterval);
+      } else if (
+        !document.hidden &&
+        time > 0 &&
+        !gameControls.style.display.includes('flex')
+      ) {
+        // Resume game if not ended
+        gameInterval = setInterval(updateGame, 1000 / 60);
+      }
+    });
