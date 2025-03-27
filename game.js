@@ -45,7 +45,7 @@
       width: 120,
       height: 90,
       isJumping: false,
-      jumpHeight: canvas.height / 4,
+      jumpHeight: canvas.height / 3, // Increased from canvas.height / 4 to canvas.height / 3
       initialY: canvas.height - 150,
       velocityY: 0,
       gravity: 1.5,
