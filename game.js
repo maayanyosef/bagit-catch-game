@@ -45,7 +45,7 @@
       width: 120,
       height: 90,
       isJumping: false,
-      jumpHeight: canvas.height / 3, // Increased from canvas.height / 4 to canvas.height / 3
+      jumpHeight: canvas.height * 2,
       initialY: canvas.height - 150,
       velocityY: 0,
       gravity: 1.5,
@@ -413,7 +413,7 @@
           // Play catch sound
           try {
             const soundClone = catchSound.cloneNode();
-            soundClone.volume = 0.3;
+            soundClone.volume = 0.2;
             soundClone.play().catch((e) =>
               console.log('Audio play prevented:', e)
             );
