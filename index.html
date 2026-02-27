@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
-  <!-- Add additional meta tag to prevent zooming on iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <!-- Add non-deprecated tag for mobile web app capability -->
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/x-icon" href="assets/apple-touch-icon.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -28,11 +26,23 @@
 
   <div id="leaderboard"></div>
   <button id="stopButton">Stop Game</button>
+  <button id="pauseButton" style="display:none;">⏸ Pause</button>
   <div id="scoreboard">
-    Time: <span id="time">60</span> sec | Score: <span id="score">0</span> | Stars: <span id="stars">0</span>
+    Time: <span id="time">60</span>s | Score: <span id="score">0</span> | ⭐ <span id="stars">0</span>
   </div>
+  <div id="comboDisplay"></div>
+  <div id="powerupDisplay"></div>
   <img id="starImage" src="assets/github-stars.png" alt="Star Earned">
   <canvas id="gameCanvas"></canvas>
+
+  <!-- Pause overlay -->
+  <div id="pauseOverlay">
+    <div id="pauseBox">
+      <h2>⏸ Paused</h2>
+      <p>Press P / ESC to resume</p>
+      <button id="resumeButton">Resume</button>
+    </div>
+  </div>
 
   <!-- Mobile touch controls -->
   <div id="mobileControls">
@@ -41,10 +51,15 @@
     <button id="rightButton" class="controlButton">→</button>
   </div>
 
-  <!-- Add the missing orientationWarning div -->
   <div id="orientationWarning" style="display: none;"></div>
 
   <audio id="catchSound" src="assets/sound.mp3"></audio>
   <script src="game.js"></script>
+  <script>
+    // Wire up resume button
+    document.getElementById('resumeButton').addEventListener('click', function() {
+      togglePause();
+    });
+  </script>
 </body>
 </html>

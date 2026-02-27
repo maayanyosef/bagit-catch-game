@@ -34,19 +34,21 @@
       top: 10px;
       right: 10px;
       font-size: 18px;
-      color: black;
+      font-weight: bold;
+      color: #222;
       display: none;
-      background-color: rgba(255, 255, 255, 0.7);
-      padding: 5px;
-      border-radius: 5px;
+      background-color: rgba(255, 255, 255, 0.85);
+      padding: 6px 12px;
+      border-radius: 8px;
       z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
     @media (max-width: 480px) {
       #scoreboard {
-        font-size: 14px;
+        font-size: 13px;
         top: 5px;
         right: 5px;
-        padding: 3px;
+        padding: 3px 7px;
       }
     }
     #gameControls {
@@ -81,17 +83,23 @@
       max-width: 300px;
       padding: 15px;
       font-size: 18px;
+      font-weight: bold;
       cursor: pointer;
       background-color: #FF5722;
       color: white;
       border: none;
       border-radius: 10px;
       margin-bottom: 20px;
-      /* Ensure better touch handling on mobile */
       touch-action: manipulation;
       -webkit-appearance: none;
       -webkit-touch-callout: none;
       user-select: none;
+      box-shadow: 0 4px 12px rgba(255,87,34,0.4);
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    #startButton:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 6px rgba(255,87,34,0.3);
     }
     @media (max-width: 480px) {
       #startButton {
@@ -103,8 +111,8 @@
       position: absolute;
       top: 10px;
       left: 10px;
-      padding: 10px 15px;
-      font-size: 16px;
+      padding: 8px 14px;
+      font-size: 14px;
       cursor: pointer;
       background-color: #FF5722;
       color: white;
@@ -113,11 +121,86 @@
       display: none;
       z-index: 100;
     }
+    #pauseButton {
+      position: absolute;
+      top: 10px;
+      left: 100px;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: rgba(80,80,80,0.8);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      z-index: 100;
+    }
     @media (max-width: 480px) {
-      #stopButton {
-        font-size: 14px;
-        padding: 5px 10px;
+      #stopButton, #pauseButton {
+        font-size: 12px;
+        padding: 5px 9px;
       }
+      #pauseButton {
+        left: 90px;
+      }
+    }
+    /* Combo display */
+    #comboDisplay {
+      position: absolute;
+      top: 55px;
+      right: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #FF5722;
+      display: none;
+      background: rgba(255,255,255,0.85);
+      padding: 4px 10px;
+      border-radius: 8px;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      animation: comboPop 0.3s ease;
+    }
+    @keyframes comboPop {
+      0% { transform: scale(0.7); }
+      70% { transform: scale(1.15); }
+      100% { transform: scale(1.0); }
+    }
+    /* Power-up indicator */
+    #powerupDisplay {
+      position: absolute;
+      bottom: 140px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+      z-index: 100;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    @media (max-width: 480px) {
+      #powerupDisplay {
+        font-size: 13px;
+        bottom: 130px;
+      }
+    }
+    /* Power-up items */
+    .powerup {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      pointer-events: none;
+      z-index: 5;
+      animation: powerupFloat 0.6s ease-in-out infinite alternate;
+    }
+    @keyframes powerupFloat {
+      from { transform: scale(1.0); }
+      to { transform: scale(1.1); }
     }
     #starImage {
       position: absolute;
@@ -156,19 +239,57 @@
       z-index: 100;
       display: none;
       overflow-x: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     }
     @media (max-width: 480px) {
       #leaderboard {
         padding: 10px;
-        font-size: 14px;
+        font-size: 13px;
       }
       #leaderboard h2 {
-        font-size: 18px;
+        font-size: 16px;
       }
       #leaderboard th,
       #leaderboard td {
-        padding: 5px !important;
+        padding: 4px !important;
       }
+    }
+    /* Pause overlay */
+    #pauseOverlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+    #pauseBox {
+      background: white;
+      border-radius: 16px;
+      padding: 40px 50px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    #pauseBox h2 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    #pauseBox p {
+      color: #666;
+      margin-bottom: 20px;
+    }
+    #resumeButton {
+      padding: 12px 30px;
+      font-size: 18px;
+      background: #FF5722;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
     }
     /* Mobile touch controls */
     #mobileControls {
@@ -205,14 +326,9 @@
       }
     }
     @keyframes rotateStar {
-      0% {
-        transform: translate(-50%, -50%) rotate(0deg);
-      }
-      100% {
-        transform: translate(-50%, -50%) rotate(360deg);
-      }
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
-    /* Responsive table styles for leaderboard */
     #leaderboard table {
       width: 100%;
       border-collapse: collapse;
@@ -226,8 +342,12 @@
     #leaderboard tr:nth-child(even) {
       background-color: #f9f9f9;
     }
-    #orientationWarning {
-      display: none; /* Keep this as display: none */
+    #leaderboard tr:first-child td,
+    #leaderboard tr:nth-child(2) td,
+    #leaderboard tr:nth-child(3) td {
+      background-color: #fff8f0;
     }
-    /* Removed rotate-device.png and its styling for the <img> */
+    #orientationWarning {
+      display: none;
+    }
   </style>
