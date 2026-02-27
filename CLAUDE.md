@@ -58,25 +58,32 @@ All game logic lives in `game.js`, organized into numbered sections:
 
 | Section | Purpose |
 |---------|---------|
-| 1 | Variable declarations — DOM refs, game state, cat object |
-| 2 | `resizeCanvas()` — responsive canvas and cat sizing |
-| 3 | Event handlers — touch/click helpers, keyboard, mouse, mobile controls |
-| 4 | Movement functions — `moveLeft()`, `moveRight()`, `jump()`, `updateCat()` |
-| 5 | `startGame()` / `stopGame()` — game lifecycle |
-| 6 | Game loop — `updateGame()`, `drawCat()`, `drawSidewalk()`, `spawnBaguette()`, `updateBaguettes()`, `checkCollisions()`, `checkMissedBaguettes()` |
-| 7 | `endGame()` / `showLeaderboard()` — score submission and leaderboard display |
-| 8 | `unlockAudio()` — iOS audio context workaround |
-| 9 | Touchmove pinch-zoom prevention |
-| 10 | Window load and visibility change handlers |
+| 1  | Variable declarations — DOM refs, game state, cat object, combo/powerup state |
+| 2  | `resizeCanvas()` — responsive canvas and cat sizing |
+| 3  | Event handlers — touch/click helpers, keyboard (incl. P/ESC pause), mouse, mobile controls |
+| 4  | Pause — `togglePause()`, clears/restores both gameInterval and timerInterval |
+| 5  | Movement functions — `moveLeft()`, `moveRight()`, `jump()`, `updateCat()` (incl. magnet logic) |
+| 6  | `startGame()` / `stopGame()` — game lifecycle |
+| 7  | Power-ups — `spawnPowerup()`, `updatePowerups()`, `activatePowerup()`, `clearPowerups()` |
+| 8  | Particles — `spawnParticles()`, `updateParticles()`, `drawParticles()` |
+| 9  | Floating score text — `spawnFloatingText()`, `updateFloatingTexts()`, `drawFloatingTexts()` |
+| 10 | Combo system — `addCombo()`, `updateComboDisplay()`, `getComboMultiplier()` |
+| 11 | Game loop — `updateGame()`, `drawCat()`, `drawSidewalk()`, `spawnBaguette()`, `updateBaguettes()`, `checkCollisions()`, `checkMissedBaguettes()` |
+| 12 | `endGame()` / `showLeaderboard()` — score submission and leaderboard display |
+| 13 | `unlockAudio()` — iOS audio context workaround |
+| 14 | Misc — pinch-zoom prevention, visibility change handler |
 
 ### Key Game Mechanics
 
 - **Game duration**: 60 seconds countdown
-- **Scoring**: +1 per catch, -1 per miss (floor at 0)
+- **Scoring**: +1 per catch (×combo multiplier), -1 per miss (floor at 0)
+- **Combo multiplier**: ×1 default, ×2 at 5-streak, ×3 at 10-streak; resets on miss
 - **Stars**: +1 star every 10 catches, +2 bonus stars every 100 catches
-- **Difficulty scaling**: Baguette spawn rate increases with score (`Math.min(0.03, 0.01 + score / 500)`)
+- **Power-ups**: ⚡ Speed (5s), 🧲 Magnet (6s), 💚 +10 pts (instant); spawn rate scales with score
+- **Difficulty scaling**: Baguette fall speed scales with score (`min(speedBase * (1 + score/100), 6)`); spawn rate `Math.min(0.04, 0.01 + score / 400)`
 - **Physics**: Gravity-based jumping with velocity (`gravity: 1.5`, `velocityY` accumulator)
 - **Game loop**: Runs at ~60 FPS via `setInterval(updateGame, 1000/60)`
+- **Pause**: `isPaused` flag; both `gameInterval` and `timerInterval` are cleared and restored
 
 ### Baguette Rendering
 
