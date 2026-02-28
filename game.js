@@ -24,6 +24,8 @@
     const pauseOverlay = document.getElementById('pauseOverlay');
     const comboDisplay = document.getElementById('comboDisplay');
     const powerupDisplay = document.getElementById('powerupDisplay');
+    const personalBestEl = document.getElementById('personalBest');
+    const endScoreSummary = document.getElementById('endScoreSummary');
 
     // Detect mobile devices
     const isMobile =
@@ -32,6 +34,36 @@
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent
       );
+
+    // Difficulty settings
+    let selectedDifficulty = 'easy';
+    const DIFFICULTY = {
+      easy:   { time: 90, speedBase: isMobile ? 1.2 : 1.5, speedMax: 4, spawnMin: 0.008, spawnMax: 0.03, missPenalty: 0 },
+      normal: { time: 60, speedBase: isMobile ? 1.5 : 2,   speedMax: 6, spawnMin: 0.010, spawnMax: 0.04, missPenalty: 1 },
+      hard:   { time: 45, speedBase: isMobile ? 2.0 : 2.8, speedMax: 9, spawnMin: 0.015, spawnMax: 0.06, missPenalty: 2 }
+    };
+
+    // Personal best (localStorage, per difficulty)
+    function getPBKey(diff) { return `bagit_pb_${diff}`; }
+    function getPersonalBest(diff) { return parseInt(localStorage.getItem(getPBKey(diff)) || '0', 10); }
+    function savePersonalBest(diff, s) {
+      if (s > getPersonalBest(diff)) localStorage.setItem(getPBKey(diff), s);
+    }
+    function updatePersonalBestDisplay() {
+      const pb = getPersonalBest(selectedDifficulty);
+      personalBestEl.textContent = pb > 0 ? `🏅 Your best (${selectedDifficulty}): ${pb}` : '';
+    }
+
+    // Wire up difficulty buttons
+    document.querySelectorAll('.diffBtn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.diffBtn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        selectedDifficulty = this.dataset.diff;
+        updatePersonalBestDisplay();
+      });
+    });
+    updatePersonalBestDisplay();
 
     // Global game variables
     let score = 0;
@@ -84,6 +116,7 @@
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      initClouds();
 
       cat.initialY = canvas.height - 150;
       if (!cat.isJumping) {
@@ -298,7 +331,7 @@
 
       score = 0;
       stars = 0;
-      time = 60;
+      time = DIFFICULTY[selectedDifficulty].time;
       combo = 0;
       activePowerups = {};
       powerupTimers = {};
@@ -320,17 +353,52 @@
       pauseOverlay.style.display = 'none';
       comboDisplay.style.display = 'none';
 
-      gameInterval = setInterval(updateGame, 1000 / 60);
+      // Show 3-2-1-GO! countdown then start
+      let count = 3;
+      const fontSize = Math.min(canvas.width, canvas.height) * 0.22;
 
-      timerInterval = setInterval(() => {
-        if (time > 0) {
-          time--;
-          timeElement.textContent = time;
-        } else if (!endGameTriggered) {
-          clearInterval(timerInterval);
-          endGame(currentNickname);
+      function drawCountStep() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackground();
+        drawSidewalk();
+        drawCat();
+
+        ctx.save();
+        if (count > 0) {
+          ctx.font = `bold ${fontSize}px Arial`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = 'rgba(255, 87, 34, 0.92)';
+          ctx.shadowColor = 'rgba(0,0,0,0.4)';
+          ctx.shadowBlur = 20;
+          ctx.fillText(count, canvas.width / 2, canvas.height / 2);
+          count--;
+          setTimeout(drawCountStep, 750);
+        } else {
+          ctx.font = `bold ${fontSize * 0.85}px Arial`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = 'rgba(39, 174, 96, 0.95)';
+          ctx.shadowColor = 'rgba(0,0,0,0.4)';
+          ctx.shadowBlur = 20;
+          ctx.fillText('GO! 🐱', canvas.width / 2, canvas.height / 2);
+          setTimeout(() => {
+            gameInterval = setInterval(updateGame, 1000 / 60);
+            timerInterval = setInterval(() => {
+              if (time > 0) {
+                time--;
+                timeElement.textContent = time;
+              } else if (!endGameTriggered) {
+                clearInterval(timerInterval);
+                endGame(currentNickname);
+              }
+            }, 1000);
+          }, 550);
         }
-      }, 1000);
+        ctx.restore();
+      }
+
+      drawCountStep();
     }
 
     function stopGame() {
@@ -354,15 +422,19 @@
       particles = [];
       body.classList.add('start');
       gameControls.style.display = 'flex';
+      endScoreSummary.style.display = 'none';
+      updatePersonalBestDisplay();
     }
 
     /**********************************************
      * 7) Power-Ups
      **********************************************/
     const POWERUP_TYPES = [
-      { type: 'speed', color: '#FFD700', label: '⚡ Speed!', duration: 5000 },
-      { type: 'magnet', color: '#00BFFF', label: '🧲 Magnet!', duration: 6000 },
-      { type: 'points', color: '#00CC44', label: '💚 +10 pts!', duration: 0 },
+      { type: 'speed',  color: '#FFD700', label: '⚡ Speed!',   duration: 5000 },
+      { type: 'magnet', color: '#00BFFF', label: '🧲 Magnet!',  duration: 6000 },
+      { type: 'points', color: '#00CC44', label: '💚 +10 pts!', duration: 0    },
+      { type: 'shield', color: '#9B59B6', label: '🛡️ Shield!',  duration: 0    },
+      { type: 'time',   color: '#1ABC9C', label: '⏱️ +5s!',     duration: 0    },
     ];
 
     function spawnPowerup() {
@@ -376,7 +448,8 @@
       pu.style.top = `0px`;
       pu.style.background = def.color;
       pu.style.boxShadow = `0 0 12px ${def.color}`;
-      pu.textContent = def.type === 'speed' ? '⚡' : def.type === 'magnet' ? '🧲' : '💚';
+      const emojiMap = { speed: '⚡', magnet: '🧲', points: '💚', shield: '🛡️', time: '⏱️' };
+      pu.textContent = emojiMap[def.type] || '✨';
       document.body.appendChild(pu);
       powerups.push({ el: pu, def });
     }
@@ -416,6 +489,16 @@
         scoreElement.textContent = score;
         return;
       }
+      if (def.type === 'shield') {
+        activePowerups['shield'] = true;
+        updatePowerupDisplay();
+        return;
+      }
+      if (def.type === 'time') {
+        time = Math.min(time + 5, DIFFICULTY[selectedDifficulty].time);
+        timeElement.textContent = time;
+        return;
+      }
 
       activePowerups[def.type] = true;
       updatePowerupDisplay();
@@ -434,8 +517,9 @@
 
     function updatePowerupDisplay() {
       const labels = [];
-      if (activePowerups['speed']) labels.push('⚡ Speed');
+      if (activePowerups['speed'])  labels.push('⚡ Speed');
       if (activePowerups['magnet']) labels.push('🧲 Magnet');
+      if (activePowerups['shield']) labels.push('🛡️ Shield');
       powerupDisplay.textContent = labels.join('  ');
     }
 
@@ -491,6 +575,48 @@
      * 9) Floating Text (score popups)
      **********************************************/
     let floatingTexts = [];
+
+    // Screen shake
+    let shakeIntensity = 0;
+
+    // Clouds for background
+    let clouds = [];
+    function initClouds() {
+      clouds = [
+        { x: canvas.width * 0.1, y: 60,  w: 130, speed: 0.25 },
+        { x: canvas.width * 0.35, y: 40, w: 100, speed: 0.18 },
+        { x: canvas.width * 0.6, y: 90,  w: 160, speed: 0.32 },
+        { x: canvas.width * 0.82, y: 55, w: 90,  speed: 0.22 },
+      ];
+    }
+    initClouds();
+
+    function drawCloud(x, y, w) {
+      const h = w * 0.38;
+      ctx.beginPath();
+      ctx.ellipse(x,          y,          w * 0.5,  h * 0.5,  0, 0, Math.PI * 2);
+      ctx.ellipse(x - w * 0.22, y + h * 0.1, w * 0.3, h * 0.42, 0, 0, Math.PI * 2);
+      ctx.ellipse(x + w * 0.22, y + h * 0.1, w * 0.3, h * 0.42, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawBackground() {
+      // Sky gradient
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height - 30);
+      grad.addColorStop(0, '#87CEEB');
+      grad.addColorStop(0.65, '#C9E8F5');
+      grad.addColorStop(1, '#D6EEF8');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height - 30);
+
+      // Clouds
+      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      clouds.forEach(c => {
+        c.x += c.speed;
+        if (c.x > canvas.width + c.w) c.x = -c.w;
+        drawCloud(c.x, c.y, c.w);
+      });
+    }
 
     function spawnFloatingText(x, y, text, color) {
       floatingTexts.push({ x, y, text, color: color || '#FF5722', life: 1.0, vy: -1.5 });
@@ -554,6 +680,17 @@
      **********************************************/
     function updateGame() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      if (shakeIntensity > 0) {
+        ctx.translate(
+          (Math.random() - 0.5) * shakeIntensity,
+          (Math.random() - 0.5) * shakeIntensity
+        );
+        shakeIntensity = Math.max(0, shakeIntensity - 1.5);
+      }
+
+      drawBackground();
       drawSidewalk();
       updateCat();
       drawCat();
@@ -565,6 +702,8 @@
       drawParticles();
       updateFloatingTexts();
       drawFloatingTexts();
+
+      ctx.restore();
     }
 
     function drawCat() {
@@ -587,6 +726,22 @@
         ctx.restore();
       }
       ctx.drawImage(catImg, cat.x, cat.y, cat.width, cat.height);
+      if (activePowerups['shield']) {
+        ctx.save();
+        ctx.globalAlpha = 0.35 + 0.2 * Math.sin(Date.now() / 150);
+        ctx.strokeStyle = '#9B59B6';
+        ctx.lineWidth = 4;
+        ctx.shadowColor = '#9B59B6';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.ellipse(
+          cat.x + cat.width / 2, cat.y + cat.height / 2,
+          cat.width * 0.68, cat.height * 0.68,
+          0, 0, Math.PI * 2
+        );
+        ctx.stroke();
+        ctx.restore();
+      }
     }
 
     function drawSidewalk() {
@@ -609,10 +764,10 @@
       baguette.style.top = `0px`;
 
       // Difficulty: baguettes get faster with score
+      const diff = DIFFICULTY[selectedDifficulty];
       const difficultyBoost = 1 + score / 100;
-      const speedYBase = isMobile ? 1.5 : 2;
       const speedYAdjust = canvas.height > 800 ? 1.2 : 1;
-      baguette.dataset.speedY = Math.min(speedYBase * speedYAdjust * difficultyBoost, 6);
+      baguette.dataset.speedY = Math.min(diff.speedBase * speedYAdjust * difficultyBoost, diff.speedMax);
       baguette.dataset.speedX = speedX;
       document.body.appendChild(baguette);
       baguettes.push(baguette);
@@ -694,16 +849,31 @@
     function checkMissedBaguettes() {
       baguettes.forEach((baguette, index) => {
         if (parseFloat(baguette.style.top) > canvas.height - 30) {
+          const bx = parseFloat(baguette.style.left) + 25;
+          const by = canvas.height - 50;
           document.body.removeChild(baguette);
           baguettes.splice(index, 1);
-          // Reset combo on miss
-          combo = 0;
-          comboDisplay.style.display = 'none';
-          score--;
-          score = Math.max(0, score);
-          scoreElement.textContent = score;
-          // Missed particle (red)
-          spawnParticles(parseFloat(baguette.style.left) + 25, canvas.height - 30, '#ff3333');
+
+          if (activePowerups['shield']) {
+            // Shield absorbs this miss
+            delete activePowerups['shield'];
+            updatePowerupDisplay();
+            spawnFloatingText(bx, by, '🛡️ Blocked!', '#9B59B6');
+            spawnParticles(bx, canvas.height - 30, '#9B59B6');
+          } else {
+            // Reset combo on miss
+            combo = 0;
+            comboDisplay.style.display = 'none';
+            const penalty = DIFFICULTY[selectedDifficulty].missPenalty;
+            if (penalty > 0) {
+              score = Math.max(0, score - penalty);
+              scoreElement.textContent = score;
+              spawnFloatingText(bx, by, `-${penalty}`, '#ff3333');
+            }
+            shakeIntensity = 8;
+            // Missed particle (red)
+            spawnParticles(bx, canvas.height - 30, '#ff3333');
+          }
         }
       });
     }
@@ -741,6 +911,21 @@
       clearPowerups();
       body.classList.add('start');
       gameControls.style.display = 'flex';
+
+      // Show end score summary
+      const prevPB = getPersonalBest(selectedDifficulty);
+      const isNewRecord = score > prevPB && score > 0;
+      savePersonalBest(selectedDifficulty, score);
+      const diffLabel = selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1);
+      endScoreSummary.innerHTML = `
+        <div style="font-size:22px;margin-bottom:6px;">🎮 Game Over!</div>
+        <div>Score: <strong>${score}</strong> &nbsp;|&nbsp; ⭐ ${stars}</div>
+        <div style="color:#888;font-size:13px;margin-top:4px;">Difficulty: ${diffLabel}</div>
+        ${isNewRecord
+          ? '<div class="new-record">🏅 New Personal Best!</div>'
+          : (getPersonalBest(selectedDifficulty) > 0 ? `<div style="color:#888;font-size:13px;">Best: ${getPersonalBest(selectedDifficulty)}</div>` : '')}
+      `;
+      endScoreSummary.style.display = 'block';
 
       const gameData = {
         event: 'Game Ended',

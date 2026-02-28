@@ -21,9 +21,17 @@
 <body class="start">
   <div id="gameControls">
     <input type="text" id="nicknameInput" placeholder="Enter your nickname">
+    <div id="difficultySelector">
+      <span id="difficultyLabel">Difficulty:</span>
+      <button class="diffBtn active" data-diff="easy">🟢 Easy</button>
+      <button class="diffBtn" data-diff="normal">🟡 Normal</button>
+      <button class="diffBtn" data-diff="hard">🔴 Hard</button>
+    </div>
+    <div id="personalBest"></div>
     <button id="startButton">Start Game</button>
   </div>
 
+  <div id="endScoreSummary" style="display:none;"></div>
   <div id="leaderboard"></div>
   <button id="stopButton">Stop Game</button>
   <button id="pauseButton" style="display:none;">⏸ Pause</button>
