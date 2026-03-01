@@ -14,6 +14,7 @@
     const scoreElement = document.getElementById('score');
     const starsElement = document.getElementById('stars');
     const catchSound = document.getElementById('catchSound');
+    const soundToggleButton = document.getElementById('soundToggleButton');
     const body = document.body;
     const mobileControls = document.getElementById('mobileControls');
     const leftButton = document.getElementById('leftButton');
@@ -35,6 +36,9 @@
         navigator.userAgent
       );
 
+    let isMuted = false;
+
+
     // Difficulty settings
     let selectedDifficulty = 'easy';
     const DIFFICULTY = {
@@ -53,6 +57,22 @@
       const pb = getPersonalBest(selectedDifficulty);
       personalBestEl.textContent = pb > 0 ? `🏅 Your best (${selectedDifficulty}): ${pb}` : '';
     }
+
+    function applyMuteState() {
+      catchSound.muted = isMuted;
+      if (soundToggleButton) {
+        soundToggleButton.textContent = isMuted ? '🔇' : '🔊';
+        soundToggleButton.setAttribute('aria-label', isMuted ? 'Unmute sound' : 'Mute sound');
+      }
+    }
+
+    try {
+      const stored = localStorage.getItem('bagit_sound_muted');
+      if (stored === 'true') {
+        isMuted = true;
+        applyMuteState();
+      }
+    } catch (e) {}
 
     // Wire up difficulty buttons
     document.querySelectorAll('.diffBtn').forEach(btn => {
@@ -203,6 +223,15 @@
 
     addTouchEventHandler(startButton, startGame);
     addTouchEventHandler(stopButton, stopGame);
+    if (soundToggleButton) {
+      soundToggleButton.addEventListener('click', function () {
+        isMuted = !isMuted;
+        try {
+          localStorage.setItem('bagit_sound_muted', String(isMuted));
+        } catch (e) {}
+        applyMuteState();
+      });
+    }
 
     canvas.addEventListener('click', jump);
     // On mobile, the dedicated jump button handles jumping.
@@ -1125,7 +1154,7 @@
         catchSound.play().then(() => {
           catchSound.pause();
           catchSound.currentTime = 0;
-          catchSound.muted = false;
+          catchSound.muted = isMuted;
         }).catch(() => {});
       } catch (err) {}
     }
