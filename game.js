@@ -1008,6 +1008,7 @@
       const accuracy = totalCatches + totalMisses > 0
         ? Math.round((totalCatches / (totalCatches + totalMisses)) * 100)
         : 0;
+      const shareText = `I just scored ${score} points and ⭐ ${stars} on Bagit Catch Game (${diffLabel}) as ${nickname || 'an anonymous cat'}! Play at https://bagit.explorium.ninja`;
       endScoreSummary.innerHTML = `
         <div style="font-size:22px;margin-bottom:6px;">🎮 Game Over!</div>
         <div>Score: <strong>${score}</strong> &nbsp;|&nbsp; ⭐ ${stars}</div>
@@ -1020,8 +1021,11 @@
         ${isNewRecord
           ? '<div class="new-record">🏅 New Personal Best!</div>'
           : (getPersonalBest(selectedDifficulty) > 0 ? `<div style="color:#888;font-size:13px;">Best: ${getPersonalBest(selectedDifficulty)}</div>` : '')}
-        <div style="margin-top:12px;">
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;align-items:center;">
           <button id="playAgainButton" style="margin-top:4px;padding:8px 18px;border-radius:999px;border:none;background:#FF5722;color:white;font-weight:bold;cursor:pointer;">Play Again</button>
+          <button id="shareScoreButton" style="margin-top:2px;padding:7px 16px;border-radius:999px;border:none;background:#1DA1F2;color:white;font-weight:bold;cursor:pointer;font-size:13px;">
+            Share score
+          </button>
         </div>
       `;
       endScoreSummary.style.display = 'block';
@@ -1032,6 +1036,21 @@
           // Hide summary and immediately start a new round with the current nickname & difficulty
           endScoreSummary.style.display = 'none';
           startGame();
+        });
+      }
+
+      const shareButtonEl = document.getElementById('shareScoreButton');
+      if (shareButtonEl) {
+        shareButtonEl.addEventListener('click', function () {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(shareText).catch(() => {});
+          }
+          if (navigator.share) {
+            navigator.share({ text: shareText, url: 'https://bagit.explorium.ninja' }).catch(() => {});
+          } else {
+            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+            window.open(twitterUrl, '_blank', 'noopener');
+          }
         });
       }
 
