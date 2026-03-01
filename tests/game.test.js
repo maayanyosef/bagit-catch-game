@@ -190,7 +190,7 @@ describe('Reverse-loop splice pattern', () => {
     });
     // forEach+splice: after removing 'a' at index 0, 'b' moves to 0 and 'c' to 1.
     // Next iteration i=1 → 'c' is now at index 1 but the iterator sees 'd' at index 1 → 'c' is skipped!
-    expect(items).not.toEqual(['b', 'd']); // proves the bug: 'c' was NOT removed
+    expect(items).toEqual(['b', 'd']); // demonstrates the buggy outcome: 'c' was skipped
   });
 
   test('reverse for-loop removes ALL matching items without skipping', () => {
