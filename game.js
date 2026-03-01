@@ -1029,7 +1029,7 @@
           <span>🎯 ${accuracy}%</span>
         </div>
         ${isNewRecord
-          ? '<div class="new-record">🏅 New Personal Best!</div>'
+          ? '<div class="new-record">New personal best! 🎉</div>'
           : (getPersonalBest(selectedDifficulty) > 0 ? `<div style="color:#888;font-size:13px;">Best: ${getPersonalBest(selectedDifficulty)}</div>` : '')}
         <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;align-items:center;">
           <button id="playAgainButton" style="margin-top:4px;padding:8px 18px;border-radius:999px;border:none;background:#FF5722;color:white;font-weight:bold;cursor:pointer;">Play Again</button>
