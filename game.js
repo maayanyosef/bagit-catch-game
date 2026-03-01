@@ -88,6 +88,16 @@
 
     // Global game variables
     let score = 0;
+
+    function updateTimeUI() {
+      timeElement.textContent = time;
+      if (time <= 10) {
+        timeElement.classList.add('time-low');
+      } else {
+        timeElement.classList.remove('time-low');
+      }
+    }
+
     let stars = 0;
     let time = 60;
     let gameInterval;
@@ -306,7 +316,7 @@
         timerInterval = setInterval(() => {
           if (time > 0) {
             time--;
-            timeElement.textContent = time;
+            updateTimeUI();
           } else if (!endGameTriggered) {
             clearInterval(timerInterval);
             endGame(currentNickname);
@@ -406,7 +416,7 @@
       totalCatches = 0;
       totalMisses = 0;
 
-      timeElement.textContent = time;
+      updateTimeUI();
       scoreElement.textContent = score;
       starsElement.textContent = stars;
       updateComboDisplay();
@@ -565,7 +575,7 @@
       }
       if (def.type === 'time') {
         time = Math.min(time + 5, DIFFICULTY[selectedDifficulty].time);
-        timeElement.textContent = time;
+        updateTimeUI();
         return;
       }
 
