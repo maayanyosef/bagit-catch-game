@@ -75,6 +75,14 @@
       Math.floor(Math.random() * _nicknamePlaceholders.length)
     ];
 
+    // Allow pressing Enter in the nickname field to start the game quickly
+    nicknameInput.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        startGame();
+      }
+    });
+
     // Clouds (declared here so resizeCanvas → initClouds can write to it immediately)
     let clouds = [];
 
@@ -981,8 +989,20 @@
         ${isNewRecord
           ? '<div class="new-record">🏅 New Personal Best!</div>'
           : (getPersonalBest(selectedDifficulty) > 0 ? `<div style="color:#888;font-size:13px;">Best: ${getPersonalBest(selectedDifficulty)}</div>` : '')}
+        <div style="margin-top:12px;">
+          <button id="playAgainButton" style="margin-top:4px;padding:8px 18px;border-radius:999px;border:none;background:#FF5722;color:white;font-weight:bold;cursor:pointer;">Play Again</button>
+        </div>
       `;
       endScoreSummary.style.display = 'block';
+
+      const playAgainButtonEl = document.getElementById('playAgainButton');
+      if (playAgainButtonEl) {
+        playAgainButtonEl.addEventListener('click', function () {
+          // Hide summary and immediately start a new round with the current nickname & difficulty
+          endScoreSummary.style.display = 'none';
+          startGame();
+        });
+      }
 
       const gameData = {
         event: 'Game Ended',
