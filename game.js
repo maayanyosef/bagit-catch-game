@@ -90,6 +90,10 @@
     // Particles
     let particles = [];
 
+    // Session stats
+    let totalCatches = 0;
+    let totalMisses = 0;
+
     // Cat object declared BEFORE usage in resizeCanvas
     let cat = {
       x: canvas.width / 2,
@@ -338,6 +342,8 @@
       particles = [];
       isPaused = false;
       endGameTriggered = false;
+      totalCatches = 0;
+      totalMisses = 0;
 
       timeElement.textContent = time;
       scoreElement.textContent = score;
@@ -763,6 +769,12 @@
       baguette.style.left = `${x}px`;
       baguette.style.top = `0px`;
 
+      // Golden baguette: rare 1-in-12 chance, worth 5 points
+      if (Math.random() < (1 / 12)) {
+        baguette.dataset.golden = 'true';
+        baguette.classList.add('baguette-golden');
+      }
+
       // Difficulty: baguettes get faster with score
       const diff = DIFFICULTY[selectedDifficulty];
       const difficultyBoost = 1 + score / 100;
@@ -820,11 +832,18 @@
 
             addCombo();
             const multiplier = getComboMultiplier();
-            const points = multiplier;
+            const isGolden = baguette.dataset.golden === 'true';
+            const basePoints = isGolden ? 5 : 1;
+            const points = basePoints * multiplier;
             score += points;
             scoreElement.textContent = score;
+            totalCatches++;
 
-            if (multiplier > 1) {
+            if (isGolden) {
+              spawnParticles(bCX, bCY, '#FFD700');
+              spawnParticles(bCX, bCY, '#FFA500');
+              spawnFloatingText(bCX, bCY - 40, `✨ GOLDEN! +${points}`, '#FFD700');
+            } else if (multiplier > 1) {
               spawnFloatingText(bCX, bCY - 30, `+${points} x${multiplier}`, '#FFD700');
             } else {
               spawnFloatingText(bCX, bCY - 30, '+1', '#FF5722');
@@ -863,6 +882,7 @@
           } else {
             // Reset combo on miss
             combo = 0;
+            totalMisses++;
             comboDisplay.style.display = 'none';
             const penalty = DIFFICULTY[selectedDifficulty].missPenalty;
             if (penalty > 0) {
@@ -917,10 +937,18 @@
       const isNewRecord = score > prevPB && score > 0;
       savePersonalBest(selectedDifficulty, score);
       const diffLabel = selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1);
+      const accuracy = totalCatches + totalMisses > 0
+        ? Math.round((totalCatches / (totalCatches + totalMisses)) * 100)
+        : 0;
       endScoreSummary.innerHTML = `
         <div style="font-size:22px;margin-bottom:6px;">🎮 Game Over!</div>
         <div>Score: <strong>${score}</strong> &nbsp;|&nbsp; ⭐ ${stars}</div>
         <div style="color:#888;font-size:13px;margin-top:4px;">Difficulty: ${diffLabel}</div>
+        <div style="font-size:13px;color:#555;margin-top:6px;display:flex;justify-content:center;gap:14px;">
+          <span>✅ ${totalCatches} caught</span>
+          <span>❌ ${totalMisses} missed</span>
+          <span>🎯 ${accuracy}%</span>
+        </div>
         ${isNewRecord
           ? '<div class="new-record">🏅 New Personal Best!</div>'
           : (getPersonalBest(selectedDifficulty) > 0 ? `<div style="color:#888;font-size:13px;">Best: ${getPersonalBest(selectedDifficulty)}</div>` : '')}
