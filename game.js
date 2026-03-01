@@ -65,6 +65,16 @@
     });
     updatePersonalBestDisplay();
 
+    // Random placeholder nicknames — a new one each page load
+    const _nicknamePlaceholders = [
+      'BaguetteMaster', 'CroissantKing', 'PurrfectCatcher', 'BreadWinner',
+      'MiaoGourmet', 'FélixLeChat', 'BagitPro', 'CatNapper',
+      'BreadHunter', 'PawsOfFury', 'YeastBeast', 'WhiskerBaker',
+    ];
+    nicknameInput.placeholder = _nicknamePlaceholders[
+      Math.floor(Math.random() * _nicknamePlaceholders.length)
+    ];
+
     // Global game variables
     let score = 0;
     let stars = 0;
