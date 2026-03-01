@@ -115,6 +115,10 @@
     let totalCatches = 0;
     let totalMisses = 0;
 
+    // Keyboard movement state (for smooth, continuous movement)
+    let movingLeft = false;
+    let movingRight = false;
+
     // Cat object declared BEFORE usage in resizeCanvas
     let cat = {
       x: canvas.width / 2,
@@ -201,14 +205,30 @@
     }, { passive: false });
 
     document.addEventListener('keydown', function (event) {
-      if (event.key === 'ArrowLeft') {
-        moveLeft();
-      } else if (event.key === 'ArrowRight') {
-        moveRight();
-      } else if (event.key === ' ' || event.key === 'ArrowUp') {
+      const key = event.key;
+
+      if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
+        event.preventDefault();
+        movingLeft = true;
+      } else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
+        event.preventDefault();
+        movingRight = true;
+      } else if (key === ' ' || key === 'ArrowUp' || key === 'w' || key === 'W') {
+        event.preventDefault();
         jump();
-      } else if (event.key === 'p' || event.key === 'P' || event.key === 'Escape') {
+      } else if (key === 'p' || key === 'P' || key === 'Escape') {
+        event.preventDefault();
         togglePause();
+      }
+    });
+
+    document.addEventListener('keyup', function (event) {
+      const key = event.key;
+
+      if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
+        movingLeft = false;
+      } else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
+        movingRight = false;
       }
     });
 
@@ -317,6 +337,12 @@
     }
 
     function updateCat() {
+      // Keyboard-driven horizontal movement (desktop only)
+      if (!isMobile && !isPaused) {
+        if (movingLeft) moveLeft();
+        if (movingRight) moveRight();
+      }
+
       // Magnet: pull nearby baguettes toward cat
       if (activePowerups['magnet']) {
         baguettes.forEach((b) => {

@@ -389,18 +389,22 @@
     }
     /* Mobile touch controls */
     #mobileControls {
-      position: absolute;
-      bottom: 40px;
-      width: 100%;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: max(16px, env(safe-area-inset-bottom, 0px) + 12px);
       display: none;
-      justify-content: space-around;
-      z-index: 100;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 120;
       touch-action: manipulation;
+      pointer-events: none; /* let canvas receive touches except on buttons */
     }
     .controlButton {
+      flex: 0 0 auto;
       width: 80px;
       height: 80px;
-      background-color: rgba(255, 87, 34, 0.7);
+      background-color: rgba(255, 87, 34, 0.78);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -413,12 +417,27 @@
       touch-action: manipulation;
       -webkit-appearance: none;
       -webkit-touch-callout: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+      pointer-events: auto;
     }
-    @media (max-width: 480px) {
+    @media (max-width: 600px) {
+      #mobileControls {
+        padding: 0 16px;
+      }
       .controlButton {
-        width: 70px;
-        height: 70px;
+        width: 72px;
+        height: 72px;
         font-size: 24px;
+      }
+    }
+    @media (max-width: 400px) {
+      #mobileControls {
+        padding: 0 12px;
+      }
+      .controlButton {
+        width: 64px;
+        height: 64px;
+        font-size: 22px;
       }
     }
     @keyframes rotateStar {
