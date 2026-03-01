@@ -803,7 +803,9 @@
     }
 
     function checkCollisions() {
-      baguettes.forEach((baguette, index) => {
+      // Iterate in reverse so splice doesn't skip elements
+      for (let index = baguettes.length - 1; index >= 0; index--) {
+        const baguette = baguettes[index];
         const baguetteRect = baguette.getBoundingClientRect();
         const catRect = {
           left: cat.x,
@@ -862,11 +864,13 @@
             }
           }
         }
-      });
+      }
     }
 
     function checkMissedBaguettes() {
-      baguettes.forEach((baguette, index) => {
+      // Iterate in reverse so splice doesn't skip elements
+      for (let index = baguettes.length - 1; index >= 0; index--) {
+        const baguette = baguettes[index];
         if (parseFloat(baguette.style.top) > canvas.height - 30) {
           const bx = parseFloat(baguette.style.left) + 25;
           const by = canvas.height - 50;
@@ -895,7 +899,7 @@
             spawnParticles(bx, canvas.height - 30, '#ff3333');
           }
         }
-      });
+      }
     }
 
     function clearBaguettes() {
