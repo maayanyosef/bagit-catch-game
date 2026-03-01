@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/x-icon" href="assets/apple-touch-icon.png">
@@ -20,14 +20,23 @@
 </head>
 <body class="start">
   <div id="gameControls">
-    <input type="text" id="nicknameInput" placeholder="Enter your nickname">
-    <div id="difficultySelector">
+    <input type="text" id="nicknameInput" placeholder="Enter your nickname" aria-label="Nickname" autocomplete="off">
+    <div id="difficultySelector" aria-label="Difficulty" role="group">
       <span id="difficultyLabel">Difficulty:</span>
       <button class="diffBtn active" data-diff="easy">🟢 Easy</button>
       <button class="diffBtn" data-diff="normal">🟡 Normal</button>
       <button class="diffBtn" data-diff="hard">🔴 Hard</button>
     </div>
     <div id="personalBest"></div>
+    <div id="howToPlay">
+      <h2>How to Play</h2>
+      <ul>
+        <li>Use the left / right arrows (or A / D) to move the cat.</li>
+        <li>Press the up arrow or spacebar to jump.</li>
+        <li>On mobile, use the on-screen buttons to move and jump.</li>
+        <li>Catch as many baguettes as you can before the time runs out!</li>
+      </ul>
+    </div>
     <button id="startButton">Start Game</button>
   </div>
 
@@ -54,12 +63,14 @@
 
   <!-- Mobile touch controls -->
   <div id="mobileControls">
-    <button id="leftButton" class="controlButton">←</button>
-    <button id="jumpButton" class="controlButton">↑</button>
-    <button id="rightButton" class="controlButton">→</button>
+    <button id="leftButton" class="controlButton" aria-label="Move left">←</button>
+    <button id="jumpButton" class="controlButton" aria-label="Jump">↑</button>
+    <button id="rightButton" class="controlButton" aria-label="Move right">→</button>
   </div>
 
-  <div id="orientationWarning" style="display: none;"></div>
+  <div id="orientationWarning" role="status" aria-live="polite" style="display: none;">
+    Rotate your device to landscape for the best experience.
+  </div>
 
   <audio id="catchSound" src="assets/sound.mp3"></audio>
   <script src="game.js"></script>

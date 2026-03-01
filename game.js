@@ -155,8 +155,13 @@
         cat.height = 90;
       }
 
-      if (orientationWarning && isMobile && window.innerHeight > window.innerWidth) {
-        orientationWarning.style.display = 'none';
+      if (orientationWarning && isMobile) {
+        // Show orientation guidance when device is in portrait, hide in landscape.
+        if (window.innerHeight > window.innerWidth) {
+          orientationWarning.style.display = 'block';
+        } else {
+          orientationWarning.style.display = 'none';
+        }
       }
     }
 
@@ -1077,10 +1082,6 @@
     /**********************************************
      * 14) Misc
      **********************************************/
-    document.addEventListener('touchmove', function (event) {
-      // Prevent pinch-zoom; guard against undefined (non-iOS browsers don't set scale)
-      if (event.scale && event.scale !== 1) event.preventDefault();
-    }, { passive: false });
 
     window.addEventListener('load', function () {
       resizeCanvas();
