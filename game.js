@@ -165,9 +165,13 @@
     addTouchEventHandler(stopButton, stopGame);
 
     canvas.addEventListener('click', jump);
+    // On mobile, the dedicated jump button handles jumping.
+    // Canvas touchstart should only trigger jump on non-mobile (e.g. touch-enabled laptops).
     canvas.addEventListener('touchstart', function (e) {
-      e.preventDefault();
-      jump();
+      if (!isMobile) {
+        e.preventDefault();
+        jump();
+      }
     }, { passive: false });
 
     document.addEventListener('keydown', function (event) {
@@ -190,7 +194,8 @@
     });
 
     document.addEventListener('touchmove', function (event) {
-      if (!isMobile) {
+      // On mobile, track finger position to move the cat (direct touch control)
+      if (isMobile) {
         const touch = event.touches[0];
         cat.x = touch.clientX - cat.width / 2;
         cat.x = Math.max(0, Math.min(cat.x, canvas.width - cat.width));
