@@ -504,3 +504,25 @@
       display: none;
     }
   </style>
+
+    #soundToggleButton {
+      position: absolute;
+      top: 10px;
+      left: 180px;
+      padding: 6px 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: rgba(80,80,80,0.8);
+      color: white;
+      border: none;
+      border-radius: 999px;
+      z-index: 100;
+    }
+    @media (max-width: 480px) {
+      #soundToggleButton {
+        top: 40px;
+        left: 10px;
+        font-size: 14px;
+        padding: 4px 8px;
+      }
+    }
