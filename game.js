@@ -410,6 +410,8 @@
     function stopGame() {
       clearInterval(gameInterval);
       clearInterval(timerInterval);
+      gameInterval = null;
+      timerInterval = null;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       stopButton.style.display = 'none';
       if (pauseButton) pauseButton.style.display = 'none';
@@ -923,6 +925,8 @@
 
       clearInterval(gameInterval);
       clearInterval(timerInterval);
+      gameInterval = null;
+      timerInterval = null;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       stopButton.style.display = 'none';
       if (pauseButton) pauseButton.style.display = 'none';
@@ -1045,8 +1049,9 @@
         isPaused = true;
         clearInterval(gameInterval);
         clearInterval(timerInterval);
+        gameInterval = null;
+        timerInterval = null;
         pauseOverlay.style.display = 'flex';
-      } else if (!document.hidden && isPaused && !endGameTriggered && gameControls.style.display !== 'flex') {
-        // Don't auto-resume; let user resume manually
       }
+      // On return, user resumes manually via the pause overlay button
     });
