@@ -75,6 +75,9 @@
       Math.floor(Math.random() * _nicknamePlaceholders.length)
     ];
 
+    // Clouds (declared here so resizeCanvas → initClouds can write to it immediately)
+    let clouds = [];
+
     // Global game variables
     let score = 0;
     let stars = 0;
@@ -204,8 +207,9 @@
     });
 
     document.addEventListener('touchmove', function (event) {
-      // On mobile, track finger position to move the cat (direct touch control)
-      if (isMobile) {
+      // Only track finger position (and block scroll) while the game is actively running.
+      // On the start/end screen gameControls is display:flex — let scroll work normally there.
+      if (isMobile && gameControls.style.display === 'none') {
         const touch = event.touches[0];
         cat.x = touch.clientX - cat.width / 2;
         cat.x = Math.max(0, Math.min(cat.x, canvas.width - cat.width));
@@ -603,7 +607,6 @@
     let shakeIntensity = 0;
 
     // Clouds for background
-    let clouds = [];
     function initClouds() {
       clouds = [
         { x: canvas.width * 0.1, y: 60,  w: 130, speed: 0.25 },
@@ -1052,7 +1055,8 @@
      * 14) Misc
      **********************************************/
     document.addEventListener('touchmove', function (event) {
-      if (event.scale !== 1) event.preventDefault();
+      // Prevent pinch-zoom; guard against undefined (non-iOS browsers don't set scale)
+      if (event.scale && event.scale !== 1) event.preventDefault();
     }, { passive: false });
 
     window.addEventListener('load', function () {
