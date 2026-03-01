@@ -114,7 +114,7 @@
       width: 120,
       height: 90,
       isJumping: false,
-      jumpHeight: canvas.height * 2,
+      jumpHeight: Math.sqrt(2 * 1.5 * canvas.height * 0.3),  // velocity for ~30% canvas height arc
       initialY: canvas.height - 150,
       velocityY: 0,
       gravity: 1.5,
@@ -208,12 +208,15 @@
 
     document.addEventListener('touchmove', function (event) {
       // Only track finger position (and block scroll) while the game is actively running.
-      // On the start/end screen gameControls is display:flex — let scroll work normally there.
+      // On the start/end screen gameControls is display:none — let touches work normally there.
       if (isMobile && gameControls.style.display === 'none') {
+        event.preventDefault(); // always block browser scroll/pan during gameplay
         const touch = event.touches[0];
+        // Skip direct cat tracking when the user is pressing a control button —
+        // let the button's interval-based movement handle positioning instead.
+        if (touch.target && touch.target.closest('#mobileControls')) return;
         cat.x = touch.clientX - cat.width / 2;
         cat.x = Math.max(0, Math.min(cat.x, canvas.width - cat.width));
-        event.preventDefault();
       }
     }, { passive: false });
 
@@ -296,7 +299,7 @@
       if (isPaused) return;
       if (!cat.isJumping) {
         cat.isJumping = true;
-        cat.velocityY = -cat.jumpHeight * 2;
+        cat.velocityY = -cat.jumpHeight;
       }
     }
 
