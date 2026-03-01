@@ -16,6 +16,9 @@
     "testEnvironment": "jsdom",
     "setupFiles": [
       "./tests/setup.js"
+    ],
+    "testPathIgnorePatterns": [
+      "<rootDir>/tests/e2e"
     ]
   }
 }
