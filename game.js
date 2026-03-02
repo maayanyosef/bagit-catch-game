@@ -17,9 +17,6 @@
     const soundToggleButton = document.getElementById('soundToggleButton');
     const body = document.body;
     const mobileControls = document.getElementById('mobileControls');
-    const leftButton = document.getElementById('leftButton');
-    const rightButton = document.getElementById('rightButton');
-    const jumpButton = document.getElementById('jumpButton');
     const gameControls = document.getElementById('gameControls');
     const orientationWarning = document.getElementById('orientationWarning');
     const orientationDismissButton = document.getElementById('dismissOrientation');
@@ -166,6 +163,10 @@
       speed: isMobile ? 8 : 10
     };
 
+    // Double-tap detection for super jump
+    let lastTapTime = 0;
+    const DOUBLE_TAP_THRESHOLD = 300; // ms
+
     // Adjust cat size for small screens
     if (window.innerWidth <= 480) {
       cat.width = 80;
@@ -297,13 +298,9 @@
     }
 
     canvas.addEventListener('click', jump);
-    // On mobile, the dedicated jump button handles jumping.
-    // Canvas touchstart should only trigger jump on non-mobile (e.g. touch-enabled laptops).
     canvas.addEventListener('touchstart', function (e) {
-      if (!isMobile) {
-        e.preventDefault();
-        jump();
-      }
+      e.preventDefault();
+      handleTap();
     }, { passive: false });
 
     document.addEventListener('keydown', function (event) {
@@ -347,43 +344,10 @@
       if (isMobile && gameControls.style.display === 'none') {
         event.preventDefault(); // always block browser scroll/pan during gameplay
         const touch = event.touches[0];
-        // Skip direct cat tracking when the user is pressing a control button —
-        // let the button's interval-based movement handle positioning instead.
-        if (touch.target && touch.target.closest('#mobileControls')) return;
         cat.x = touch.clientX - cat.width / 2;
         cat.x = Math.max(0, Math.min(cat.x, canvas.width - cat.width));
       }
     }, { passive: false });
-
-    if (isMobile) {
-      let leftInterval, rightInterval;
-      jumpButton.addEventListener('touchstart', function (e) {
-        e.preventDefault();
-        jump();
-      }, { passive: false });
-      leftButton.addEventListener('touchstart', function (e) {
-        e.preventDefault();
-        clearInterval(leftInterval);
-        leftInterval = setInterval(() => { moveLeft(); }, 16);
-      }, { passive: false });
-      leftButton.addEventListener('touchend', function (e) {
-        e.preventDefault();
-        clearInterval(leftInterval);
-      }, { passive: false });
-      rightButton.addEventListener('touchstart', function (e) {
-        e.preventDefault();
-        clearInterval(rightInterval);
-        rightInterval = setInterval(() => { moveRight(); }, 16);
-      }, { passive: false });
-      rightButton.addEventListener('touchend', function (e) {
-        e.preventDefault();
-        clearInterval(rightInterval);
-      }, { passive: false });
-      document.addEventListener('touchend', function () {
-        clearInterval(leftInterval);
-        clearInterval(rightInterval);
-      });
-    }
 
     // Pause button (mobile)
     const pauseButton = document.getElementById('pauseButton');
@@ -399,12 +363,13 @@
       if (gameControls.style.display === 'flex' || endGameTriggered) return;
       isPaused = !isPaused;
       if (isPaused) {
-        clearInterval(gameInterval);
+        cancelAnimationFrame(gameInterval);
+        gameInterval = null;
         clearInterval(timerInterval);
         pauseOverlay.style.display = 'flex';
       } else {
         pauseOverlay.style.display = 'none';
-        gameInterval = setInterval(updateGame, 1000 / 60);
+        gameInterval = requestAnimationFrame(gameLoop);
         timerInterval = setInterval(() => {
           if (time > 0) {
             time--;
@@ -436,6 +401,25 @@
         cat.isJumping = true;
         cat.velocityY = -cat.jumpHeight;
       }
+    }
+
+    function superJump() {
+      if (isPaused) return;
+      if (!cat.isJumping) {
+        cat.isJumping = true;
+        cat.velocityY = -cat.jumpHeight * 1.5;
+        spawnFloatingText(cat.x + cat.width / 2, cat.y, '⬆️ SUPER!', '#2196F3');
+      }
+    }
+
+    function handleTap() {
+      const now = Date.now();
+      if (now - lastTapTime < DOUBLE_TAP_THRESHOLD) {
+        superJump();
+      } else {
+        jump();
+      }
+      lastTapTime = now;
     }
 
     function updateCat() {
@@ -493,8 +477,6 @@
       stopButton.style.display = 'block';
       scoreboard.style.display = 'flex';
       if (pauseButton) pauseButton.style.display = 'block';
-
-      if (isMobile) mobileControls.style.display = 'flex';
 
       score = 0;
       stars = 0;
@@ -560,7 +542,7 @@
           ctx.shadowBlur = 20;
           ctx.fillText('GO! 🐱', canvas.width / 2, canvas.height / 2);
           setTimeout(() => {
-            gameInterval = setInterval(updateGame, 1000 / 60);
+            gameInterval = requestAnimationFrame(gameLoop);
             timerInterval = setInterval(() => {
               if (time > 0) {
                 time--;
@@ -579,7 +561,7 @@
     }
 
     function stopGame() {
-      clearInterval(gameInterval);
+      cancelAnimationFrame(gameInterval);
       clearInterval(timerInterval);
       gameInterval = null;
       timerInterval = null;
@@ -587,7 +569,7 @@
       stopButton.style.display = 'none';
       if (pauseButton) pauseButton.style.display = 'none';
       scoreboard.style.display = 'none';
-      mobileControls.style.display = 'none';
+      if (mobileControls) mobileControls.style.display = 'none';
       pauseOverlay.style.display = 'none';
       comboDisplay.style.display = 'none';
       powerupDisplay.textContent = '';
@@ -888,6 +870,11 @@
     /**********************************************
      * 11) Game Loop
      **********************************************/
+    function gameLoop() {
+      updateGame();
+      gameInterval = requestAnimationFrame(gameLoop);
+    }
+
     function updateGame() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -925,19 +912,21 @@
       const scaleY = h / 90;  // reference height 90
       ctx.scale(scaleX, scaleY);
 
-      // Tail (curved, behind body)
+      // Tail (curved, behind body) — animated wag
+      const tailWag = Math.sin(Date.now() / 300) * 8;
       ctx.strokeStyle = '#F28C28';
       ctx.lineWidth = 5;
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(15, 55);
-      ctx.quadraticCurveTo(-8, 30, 5, 15);
+      ctx.quadraticCurveTo(-8 + tailWag, 30, 5, 15);
       ctx.stroke();
 
-      // Body (orange rounded ellipse)
+      // Body (orange rounded ellipse) — animated breathing
+      const breathe = 1 + Math.sin(Date.now() / 500) * 0.015;
       ctx.fillStyle = '#F28C28';
       ctx.beginPath();
-      ctx.ellipse(60, 55, 42, 30, 0, 0, Math.PI * 2);
+      ctx.ellipse(60, 55, 42, 30 * breathe, 0, 0, Math.PI * 2);
       ctx.fill();
       // Body outline
       ctx.strokeStyle = '#D2691E';
@@ -1116,6 +1105,34 @@
         baguette = document.createElement('img');
         baguette.src = 'https://emoji.slack-edge.com/T8UPK0YQ3/bagit/130f01dbd0e3f77d.gif';
         baguette.classList.add('baguette');
+        baguette.onerror = function() {
+          // Generate canvas-drawn baguette as fallback
+          if (!window._baguetteFallbackSrc) {
+            var c = document.createElement('canvas');
+            c.width = 50; c.height = 100;
+            var cx = c.getContext('2d');
+            // Baguette shape: elongated oval, golden brown
+            cx.fillStyle = '#D4A947';
+            cx.beginPath();
+            cx.ellipse(25, 50, 14, 45, 0, 0, Math.PI * 2);
+            cx.fill();
+            // Darker crust lines
+            cx.strokeStyle = '#B8860B';
+            cx.lineWidth = 2;
+            cx.beginPath();
+            cx.moveTo(18, 20); cx.lineTo(22, 40);
+            cx.moveTo(28, 25); cx.lineTo(32, 45);
+            cx.moveTo(20, 55); cx.lineTo(24, 75);
+            cx.stroke();
+            // Highlight
+            cx.fillStyle = 'rgba(255,255,200,0.3)';
+            cx.beginPath();
+            cx.ellipse(20, 45, 6, 30, -0.2, 0, Math.PI * 2);
+            cx.fill();
+            try { window._baguetteFallbackSrc = c.toDataURL(); } catch(e) {}
+          }
+          if (window._baguetteFallbackSrc) this.src = window._baguetteFallbackSrc;
+        };
       }
       if (!document.body.contains(baguette)) document.body.appendChild(baguette);
       baguette.style.display = 'block';
@@ -1205,6 +1222,7 @@
             baguettes.splice(index, 1);
 
             addCombo();
+            if (navigator.vibrate) navigator.vibrate(50);
             const multiplier = getComboMultiplier();
             const isGolden = baguette.dataset.golden === 'true';
             const basePoints = isGolden ? 5 : 1;
@@ -1293,7 +1311,7 @@
       if (endGameTriggered) return;
       endGameTriggered = true;
 
-      clearInterval(gameInterval);
+      cancelAnimationFrame(gameInterval);
       clearInterval(timerInterval);
       gameInterval = null;
       timerInterval = null;
@@ -1301,7 +1319,7 @@
       stopButton.style.display = 'none';
       if (pauseButton) pauseButton.style.display = 'none';
       scoreboard.style.display = 'none';
-      mobileControls.style.display = 'none';
+      if (mobileControls) mobileControls.style.display = 'none';
       pauseOverlay.style.display = 'none';
       comboDisplay.style.display = 'none';
       powerupDisplay.textContent = '';
@@ -1449,7 +1467,7 @@
     document.addEventListener('visibilitychange', function () {
       if (document.hidden && gameInterval && !isPaused) {
         isPaused = true;
-        clearInterval(gameInterval);
+        cancelAnimationFrame(gameInterval);
         clearInterval(timerInterval);
         gameInterval = null;
         timerInterval = null;
