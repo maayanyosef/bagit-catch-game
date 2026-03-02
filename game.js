@@ -1110,6 +1110,10 @@
 
       const playAgainButtonEl = document.getElementById('playAgainButton');
       if (playAgainButtonEl) {
+        // Move keyboard focus to the primary action so the summary feels like a proper end-of-round screen.
+        try {
+          playAgainButtonEl.focus();
+        } catch (e) {}
         playAgainButtonEl.addEventListener('click', function () {
           // Hide summary and immediately start a new round with the current nickname & difficulty
           endScoreSummary.style.display = 'none';
