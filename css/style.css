@@ -571,3 +571,14 @@
         white-space: nowrap;
       }
     }
+
+    /* Fine-tune difficulty layout for very narrow portrait phones */
+    @media (max-width: 420px) {
+      #difficultySelector {
+        max-width: 320px;
+      }
+      .diffBtn {
+        padding: 5px 6px;
+        font-size: 11px;
+      }
+    }
