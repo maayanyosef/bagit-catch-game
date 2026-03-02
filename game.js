@@ -22,6 +22,7 @@
     const jumpButton = document.getElementById('jumpButton');
     const gameControls = document.getElementById('gameControls');
     const orientationWarning = document.getElementById('orientationWarning');
+    const orientationDismissButton = document.getElementById('orientationDismiss');
     const pauseOverlay = document.getElementById('pauseOverlay');
     const comboDisplay = document.getElementById('comboDisplay');
     const powerupDisplay = document.getElementById('powerupDisplay');
@@ -174,6 +175,8 @@
     /**********************************************
      * 2) Resize Canvas Function
      **********************************************/
+    let orientationDismissed = false;
+
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -191,10 +194,15 @@
         cat.height = 90;
       }
 
-      if (orientationWarning && isMobile) {
+      if (orientationWarning && isMobile && !orientationDismissed) {
         // Show orientation guidance when device is in portrait, hide in landscape.
         if (window.innerHeight > window.innerWidth) {
-          orientationWarning.style.display = 'block';
+          orientationWarning.style.display = 'flex';
+          // Auto-hide after 5 seconds so it doesn't permanently cover UI
+          clearTimeout(orientationWarning._hideTimer);
+          orientationWarning._hideTimer = setTimeout(() => {
+            orientationWarning.style.display = 'none';
+          }, 5000);
         } else {
           orientationWarning.style.display = 'none';
         }
@@ -220,6 +228,13 @@
       element.addEventListener('click', function(e) {
         e.preventDefault();
         callback();
+      });
+    }
+
+    if (orientationDismissButton && isMobile) {
+      addTouchEventHandler(orientationDismissButton, () => {
+        orientationDismissed = true;
+        orientationWarning.style.display = 'none';
       });
     }
 

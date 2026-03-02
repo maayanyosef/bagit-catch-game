@@ -499,13 +499,29 @@
       left: 50%;
       bottom: 16px;
       transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(0, 0, 0, 0.82);
       color: #fff;
       padding: 8px 14px;
       border-radius: 999px;
       font-size: 14px;
       z-index: 220;
       display: none;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #orientationWarning .orientation-text {
+      white-space: nowrap;
+    }
+
+    #orientationDismiss {
+      border: none;
+      background: transparent;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 0 2px 1px 6px;
+      line-height: 1;
     }
     #soundToggleButton {
       position: absolute;
