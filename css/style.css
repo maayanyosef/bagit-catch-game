@@ -1,4 +1,3 @@
-<style>
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
@@ -14,7 +13,7 @@
       height: 100%;
     }
     body.start {
-      background: url('https://bagit.explorium.ninja/assets/background.png') no-repeat center center fixed;
+      background: url('../assets/background.png') no-repeat center center fixed;
       background-size: contain;
       background-position: center;
       background-color: black;
@@ -503,8 +502,6 @@
       z-index: 220;
       display: none;
     }
-  </style>
-
     #soundToggleButton {
       position: absolute;
       top: 10px;
