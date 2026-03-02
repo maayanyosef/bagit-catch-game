@@ -1,6 +1,6 @@
 {
   "name": "bagit-catch-game",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Bagit baguette catch game",
   "scripts": {
     "test": "jest --testEnvironment jsdom",
