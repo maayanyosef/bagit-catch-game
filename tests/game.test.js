@@ -162,8 +162,9 @@ describe('Collision detection — reverse loop', () => {
     const b2 = makeBaguette(0, 0);
     const b3 = makeBaguette(9999, 9999); // far away — should NOT be removed
 
-    // Baguettes are stored in the game's internal array; direct DOM check suffices
-    expect(document.querySelectorAll('.baguette').length).toBe(3);
+    // Baguettes are stored in the game's internal array; direct DOM check suffices.
+    // With object pooling and ongoing spawns, there may be more than 3 in the DOM at this point.
+    expect(document.querySelectorAll('.baguette').length).toBeGreaterThanOrEqual(3);
 
     // Run one game frame
     jest.advanceTimersByTime(1000 / 60);

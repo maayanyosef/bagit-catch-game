@@ -123,6 +123,7 @@
     let gameInterval;
     let timerInterval;
     let baguettes = [];
+    let baguettePool = [];
     let endGameTriggered = false;
     let isPaused = false;
     let currentNickname = '';
@@ -134,6 +135,7 @@
 
     // Power-up system
     let powerups = [];
+    let powerupPool = [];
     let activePowerups = {};
     // activePowerups keys: 'speed', 'magnet', 'points'
     let powerupTimers = {};
@@ -545,20 +547,35 @@
       { type: 'time',   color: '#1ABC9C', label: '⏱️ +5s!',     duration: 0    },
     ];
 
+    function getPowerupElement() {
+      let pu = powerupPool.pop();
+      if (!pu) {
+        pu = document.createElement('div');
+        pu.className = 'powerup';
+      }
+      if (!document.body.contains(pu)) document.body.appendChild(pu);
+      pu.style.display = 'flex';
+      return pu;
+    }
+
+    function recyclePowerup(pu) {
+      if (!pu) return;
+      pu.style.display = 'none';
+      powerupPool.push(pu);
+    }
+
     function spawnPowerup() {
       const def = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
       const x = Math.random() * (canvas.width - 60) + 10;
-      const pu = document.createElement('div');
-      pu.className = 'powerup';
+      const pu = getPowerupElement();
       pu.dataset.type = def.type;
       pu.dataset.speedY = 1.5;
-      pu.style.left = `${x}px`;
-      pu.style.top = `0px`;
+      pu.style.left = x + 'px';
+      pu.style.top = '0px';
       pu.style.background = def.color;
-      pu.style.boxShadow = `0 0 12px ${def.color}`;
+      pu.style.boxShadow = '0 0 12px ' + def.color;
       const emojiMap = { speed: '⚡', magnet: '🧲', points: '💚', shield: '🛡️', time: '⏱️' };
       pu.textContent = emojiMap[def.type] || '✨';
-      document.body.appendChild(pu);
       powerups.push({ el: pu, def });
     }
 
@@ -569,7 +586,7 @@
 
       powerups = powerups.filter(({ el, def }) => {
         const top = parseFloat(el.style.top) + parseFloat(el.dataset.speedY);
-        el.style.top = `${top}px`;
+        el.style.top = top + 'px';
 
         // Collision with cat
         const rect = el.getBoundingClientRect();
@@ -577,12 +594,12 @@
         if (catRect.left < rect.right && catRect.right > rect.left &&
             catRect.top < rect.bottom && catRect.bottom > rect.top) {
           activatePowerup(def);
-          document.body.removeChild(el);
+          recyclePowerup(el);
           return false;
         }
 
         if (top > canvas.height) {
-          document.body.removeChild(el);
+          recyclePowerup(el);
           return false;
         }
         return true;
@@ -633,7 +650,7 @@
 
     function clearPowerups() {
       powerups.forEach(({ el }) => {
-        if (document.body.contains(el)) document.body.removeChild(el);
+        recyclePowerup(el);
       });
       powerups = [];
       Object.values(powerupTimers).forEach(clearTimeout);
@@ -861,14 +878,33 @@
       }
     }
 
+    function getBaguetteElement() {
+      let baguette = baguettePool.pop();
+      if (!baguette) {
+        baguette = document.createElement('img');
+        baguette.src = 'https://emoji.slack-edge.com/T8UPK0YQ3/bagit/130f01dbd0e3f77d.gif';
+        baguette.classList.add('baguette');
+      }
+      if (!document.body.contains(baguette)) document.body.appendChild(baguette);
+      baguette.style.display = 'block';
+      return baguette;
+    }
+
+    function recycleBaguette(baguette) {
+      if (!baguette) return;
+      baguette.style.display = 'none';
+      delete baguette.dataset.isColliding;
+      baguettePool.push(baguette);
+    }
+
     function spawnBaguette() {
       const x = Math.random() * (canvas.width - 50);
       const speedX = (Math.random() - 0.5) * 4;
-      const baguette = document.createElement('img');
-      baguette.src = 'https://emoji.slack-edge.com/T8UPK0YQ3/bagit/130f01dbd0e3f77d.gif';
-      baguette.classList.add('baguette');
-      baguette.style.left = `${x}px`;
-      baguette.style.top = `0px`;
+      const baguette = getBaguetteElement();
+      baguette.style.left = x + 'px';
+      baguette.style.top = '0px';
+      baguette.classList.remove('baguette-golden');
+      delete baguette.dataset.golden;
 
       // Golden baguette: rare 1-in-12 chance, worth 5 points
       if (Math.random() < (1 / 12)) {
@@ -882,22 +918,25 @@
       const speedYAdjust = canvas.height > 800 ? 1.2 : 1;
       baguette.dataset.speedY = Math.min(diff.speedBase * speedYAdjust * difficultyBoost, diff.speedMax);
       baguette.dataset.speedX = speedX;
-      document.body.appendChild(baguette);
       baguettes.push(baguette);
     }
 
     function updateBaguettes() {
-      const spawnRate = Math.min(0.04, 0.01 + score / 400);
+      const diff = DIFFICULTY[selectedDifficulty];
+      const difficultyFactor = Math.min(1, score / 100);
+      const spawnRate = diff.spawnMin + (diff.spawnMax - diff.spawnMin) * difficultyFactor;
       if (Math.random() < spawnRate) spawnBaguette();
 
       baguettes.forEach((baguette) => {
         const speedY = parseFloat(baguette.dataset.speedY);
         const speedX = parseFloat(baguette.dataset.speedX);
-        baguette.style.top = `${parseFloat(baguette.style.top) + speedY}px`;
-        baguette.style.left = `${parseFloat(baguette.style.left) + speedX}px`;
+        const top = parseFloat(baguette.style.top) + speedY;
+        let left = parseFloat(baguette.style.left) + speedX;
+        baguette.style.top = top + 'px';
+        baguette.style.left = left + 'px';
 
         const baguetteWidth = parseFloat(getComputedStyle(baguette).width);
-        if (parseFloat(baguette.style.left) < 0 || parseFloat(baguette.style.left) > canvas.width - baguetteWidth) {
+        if (left < 0 || left > canvas.width - baguetteWidth) {
           baguette.dataset.speedX = -speedX;
         }
       });
@@ -930,7 +969,7 @@
             const bCY = parseFloat(baguette.style.top) + 50;
             spawnParticles(bCX, bCY, '#f5a623');
 
-            document.body.removeChild(baguette);
+            recycleBaguette(baguette);
             baguettes.splice(index, 1);
 
             addCombo();
@@ -975,7 +1014,7 @@
         if (parseFloat(baguette.style.top) > canvas.height - 30) {
           const bx = parseFloat(baguette.style.left) + 25;
           const by = canvas.height - 50;
-          document.body.removeChild(baguette);
+          recycleBaguette(baguette);
           baguettes.splice(index, 1);
 
           if (activePowerups['shield']) {
@@ -1005,7 +1044,7 @@
 
     function clearBaguettes() {
       baguettes.forEach((baguette) => {
-        if (document.body.contains(baguette)) document.body.removeChild(baguette);
+        recycleBaguette(baguette);
       });
       baguettes = [];
     }
