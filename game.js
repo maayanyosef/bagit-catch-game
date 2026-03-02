@@ -464,11 +464,7 @@
     function startGame() {
       if (orientationWarning) orientationWarning.style.display = 'none';
 
-      const nickname = nicknameInput.value.trim();
-      if (!nickname) {
-        alert('Please enter your nickname!');
-        return;
-      }
+      const nickname = nicknameInput.value.trim() || nicknameInput.placeholder;
       currentNickname = nickname;
 
       body.classList.remove('start');

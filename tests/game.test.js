@@ -34,16 +34,15 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 // 1. startGame() — refuses to start without a nickname
 // ---------------------------------------------------------------------------
-describe('startGame() — nickname validation', () => {
-  test('shows alert and does not hide gameControls when nickname is empty', () => {
-    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+describe('startGame() — nickname handling', () => {
+  test('uses random placeholder when nickname is empty and proceeds', () => {
     const gameControls = document.getElementById('gameControls');
 
     document.getElementById('nicknameInput').value = '';
     document.getElementById('startButton').click();
 
-    expect(alertSpy).toHaveBeenCalledWith('Please enter your nickname!');
-    expect(gameControls.style.display).toBe('flex'); // start screen still visible
+    // Should proceed (no alert) — falls back to the random placeholder nickname
+    expect(gameControls.style.display).toBe('none');
   });
 
   test('proceeds (hides gameControls) when nickname is provided', () => {
