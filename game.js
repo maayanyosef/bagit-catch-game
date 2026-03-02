@@ -704,6 +704,9 @@
     // Screen shake
     let shakeIntensity = 0;
 
+    // Background parallax scroll
+    let bgScroll = 0;
+
     // Clouds for background
     function initClouds() {
       clouds = [
@@ -733,8 +736,22 @@
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height - 30);
 
-      // Clouds
-      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      // Distant parallax skyline (very soft rectangles that scroll slowly)
+      bgScroll = (bgScroll + 0.2) % canvas.width;
+      const skylineHeight = Math.max(40, canvas.height * 0.12);
+      ctx.save();
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = '#5DA3D1';
+      for (let x = -canvas.width; x < canvas.width * 2; x += 90) {
+        const offsetX = x + bgScroll * 0.5;
+        const w = 40 + (x % 3) * 10;
+        const h = skylineHeight * (0.7 + ((x % 5) / 10));
+        ctx.fillRect(offsetX, canvas.height - 30 - h - 30, w, h);
+      }
+      ctx.restore();
+
+      // Clouds (foreground layer)
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
       clouds.forEach(c => {
         c.x += c.speed;
         if (c.x > canvas.width + c.w) c.x = -c.w;
