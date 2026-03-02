@@ -25,10 +25,6 @@ function buildDOM() {
     <input type="text" id="nicknameInput" placeholder="Enter your nickname" />
     <div id="leaderboard" style="display:none"></div>
     <audio id="catchSound"></audio>
-    <div id="mobileControls" style="display:none"></div>
-    <button id="leftButton"></button>
-    <button id="rightButton"></button>
-    <button id="jumpButton"></button>
     <div id="gameControls" style="display:flex"></div>
     <div id="orientationWarning" style="display:none"><button id="dismissOrientation" aria-label="Dismiss">&times;</button></div>
     <div id="pauseOverlay" style="display:none"></div>
