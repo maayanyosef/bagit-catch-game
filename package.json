@@ -1,6 +1,6 @@
 {
   "name": "bagit-catch-game",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Bagit baguette catch game",
   "scripts": {
     "test": "jest --testEnvironment jsdom",
@@ -9,8 +9,10 @@
   "devDependencies": {
     "@jest/globals": "^29.7.0",
     "@playwright/test": "^1.58.2",
+    "http-server": "^14.1.1",
     "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0"
+    "jest-environment-jsdom": "^29.7.0",
+    "wait-on": "^8.0.0"
   },
   "jest": {
     "testEnvironment": "jsdom",

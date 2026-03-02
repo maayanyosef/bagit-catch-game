@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Bagit Catch Game** is a browser-based arcade game where players control a cat to catch falling baguettes. Built with vanilla HTML5, CSS3, and JavaScript (no frameworks or build tools). Deployed via GitHub Pages at `bagit.explorium.ninja`.
+**Bagit Catch Game** is a browser-based arcade game where players control a cat to catch falling baguettes. Built with vanilla HTML5, CSS3, and JavaScript (no frameworks). Deployed via GitHub Pages at `bagit.explorium.ninja`.
 
 - **License**: MIT
 - **Author**: Maayan Yosef
@@ -12,7 +12,7 @@
 ```
 bagit-catch-game/
 ├── index.html          # Entry point — HTML structure, meta tags, Google Analytics
-├── game.js             # All game logic (634 lines, single file)
+├── game.js             # All game logic (~1244 lines, single file)
 ├── css/
 │   └── style.css       # All styling — responsive design with media queries
 ├── assets/
@@ -22,6 +22,12 @@ bagit-catch-game/
 │   ├── apple-touch-icon.png
 │   ├── screenshot.png  # README screenshot
 │   └── sound.mp3       # Baguette catch sound effect
+├── tests/
+│   ├── setup.js        # Jest JSDOM setup
+│   ├── game.test.js    # Unit tests (Jest)
+│   └── e2e/
+│       └── bagit.spec.ts # E2E tests (Playwright)
+├── package.json        # Dev dependencies (Jest, Playwright)
 ├── favicon.ico
 ├── CNAME               # Custom domain: bagit.explorium.ninja
 └── README.md           # Player-facing documentation
@@ -30,7 +36,7 @@ bagit-catch-game/
 ## Tech Stack
 
 - **HTML5 Canvas** for game rendering
-- **Vanilla JavaScript** — no frameworks, no bundler, no npm
+- **Vanilla JavaScript** — no frameworks, no bundler
 - **CSS3** with responsive breakpoints (480px, 768px)
 - **Web Audio API** for sound effects
 - **Google Apps Script** as backend for leaderboard (POST scores, GET leaderboard)
@@ -40,7 +46,7 @@ bagit-catch-game/
 
 ### No Build Step
 
-This project has **no build tools, no package.json, no transpilation**. Files are served directly. To develop locally, open `index.html` in a browser or use any static file server.
+This project has **no build tools and no transpilation**. Game files are served directly. To develop locally, open `index.html` in a browser or use any static file server.
 
 ### Deployment
 
@@ -48,30 +54,32 @@ Deployed via **GitHub Pages** from the `main` branch. The `CNAME` file maps to `
 
 ### Testing
 
-There are **no automated tests**. Testing is manual — open the game in a browser and verify gameplay on desktop and mobile.
+- **Unit tests**: `npm test` — runs Jest with jsdom environment against `tests/game.test.js`
+- **E2E tests**: `npm run test:e2e` — runs Playwright tests from `tests/e2e/bagit.spec.ts`
+- **Manual testing**: Open the game in a browser and verify gameplay on desktop and mobile
 
 ## Architecture
 
 ### game.js — Single File Architecture
 
-All game logic lives in `game.js`, organized into numbered sections:
+All game logic lives in `game.js` (~1244 lines), organized into numbered sections:
 
-| Section | Purpose |
-|---------|---------|
-| 1  | Variable declarations — DOM refs, game state, cat object, combo/powerup state |
-| 2  | `resizeCanvas()` — responsive canvas and cat sizing |
-| 3  | Event handlers — touch/click helpers, keyboard (incl. P/ESC pause), mouse, mobile controls |
-| 4  | Pause — `togglePause()`, clears/restores both gameInterval and timerInterval |
-| 5  | Movement functions — `moveLeft()`, `moveRight()`, `jump()`, `updateCat()` (incl. magnet logic) |
-| 6  | `startGame()` / `stopGame()` — game lifecycle |
-| 7  | Power-ups — `spawnPowerup()`, `updatePowerups()`, `activatePowerup()`, `clearPowerups()` |
-| 8  | Particles — `spawnParticles()`, `updateParticles()`, `drawParticles()` |
-| 9  | Floating score text — `spawnFloatingText()`, `updateFloatingTexts()`, `drawFloatingTexts()` |
-| 10 | Combo system — `addCombo()`, `updateComboDisplay()`, `getComboMultiplier()` |
-| 11 | Game loop — `updateGame()`, `drawCat()`, `drawSidewalk()`, `spawnBaguette()`, `updateBaguettes()`, `checkCollisions()`, `checkMissedBaguettes()` |
-| 12 | `endGame()` / `showLeaderboard()` — score submission and leaderboard display |
-| 13 | `unlockAudio()` — iOS audio context workaround |
-| 14 | Misc — pinch-zoom prevention, visibility change handler |
+| Section | Line | Purpose                                                                                         |
+|---------|------|-------------------------------------------------------------------------------------------------|
+| 1       | 2    | Variable declarations — DOM refs, game state, cat object, combo/powerup state                   |
+| 2       | 175  | `resizeCanvas()` — responsive canvas and cat sizing                                             |
+| 3       | 212  | Helper for both touch & click — event handlers, keyboard (incl. P/ESC pause), mouse, mobile     |
+| 4       | 334  | Pause — `togglePause()`, clears/restores both gameInterval and timerInterval                     |
+| 5       | 360  | Movement functions — `moveLeft()`, `moveRight()`, `jump()`, `updateCat()` (incl. magnet logic)  |
+| 6       | 417  | `startGame()` / `stopGame()` — game lifecycle (incl. countdown)                                 |
+| 7       | 540  | Power-ups — `spawnPowerup()`, `updatePowerups()`, `activatePowerup()`, `clearPowerups()`        |
+| 8       | 662  | Particles — `spawnParticles()`, `updateParticles()`, `drawParticles()`                          |
+| 9       | 700  | Floating score text — `spawnFloatingText()`, `updateFloatingTexts()`, `drawFloatingTexts()`     |
+| 10      | 787  | Combo system — `addCombo()`, `updateComboDisplay()`, `getComboMultiplier()`                     |
+| 11      | 820  | Game loop — `updateGame()`, `drawCat()`, `drawSidewalk()`, `spawnBaguette()`, collisions        |
+| 12      | 1075 | `endGame()` / `showLeaderboard()` — score submission and leaderboard display                    |
+| 13      | 1204 | `unlockAudio()` — iOS audio context workaround                                                  |
+| 14      | 1227 | Misc — pinch-zoom prevention, visibility change handler                                         |
 
 ### Key Game Mechanics
 
@@ -120,7 +128,7 @@ Bounding-box collision between the canvas-based cat (`cat.x`, `cat.y`, `cat.widt
 ## Coding Conventions
 
 - **No modules or imports** — everything is global scope in a single JS file
-- **Section comments** — numbered `/**** N) Title ****/` block comments separate logical areas
+- **Section comments** — numbered `* N) Title` block comments separate logical areas
 - **DOM elements** — referenced via `document.getElementById()` at file top
 - **Mobile detection** — `isMobile` flag based on touch events + user agent sniffing
 - **Event handling** — `{ passive: false }` on touch events to allow `preventDefault()`
@@ -135,13 +143,26 @@ Bounding-box collision between the canvas-based cat (`cat.x`, `cat.y`, `cat.widt
 - **External asset URLs**: Cat sprite and baguette image are loaded from `bagit.explorium.ninja` and `emoji.slack-edge.com` respectively. These URLs must remain accessible.
 - **Single-file constraint**: All JS is in `game.js`. Refactoring into modules would require adding a bundler or switching to ES modules with a server.
 
+## Releases
+
+Every version bump **must** have a corresponding GitHub release. Use this exact format:
+
+- **Tag**: `vX.Y.Z` (semantic versioning, always prefixed with `v`)
+- **Title**: `vX.Y.Z – short lowercase description` (e.g., `v1.4.1 – mobile controls polish`)
+- **Body**: Markdown with `## What's New`, `## Bug Fixes`, and `## Closes` sections as applicable
+
+Create releases with: `gh release create vX.Y.Z --title "vX.Y.Z – description" --notes "..."`
+
+Bump `package.json` version to match the tag before tagging.
+
 ## Making Changes
 
 When modifying this project:
 
 1. **Keep it simple** — No build tools, no frameworks. Vanilla JS only.
 2. **Test on both desktop and mobile** — The game has significantly different behavior on each platform.
-3. **Preserve the section comment structure** in `game.js` — it's the only organizational pattern.
-4. **Be careful with the game loop** — `setInterval` at 60 FPS means performance matters. Avoid heavy DOM operations inside `updateGame()`.
-5. **Audio changes** require testing on iOS Safari specifically.
-6. **CSS changes** must be tested at all three breakpoints: desktop, ≤768px, and ≤480px.
+3. **Run tests** — `npm test` for unit tests, `npm run test:e2e` for E2E tests.
+4. **Preserve the section comment structure** in `game.js` — it's the only organizational pattern.
+5. **Be careful with the game loop** — `setInterval` at 60 FPS means performance matters. Avoid heavy DOM operations inside `updateGame()`.
+6. **Audio changes** require testing on iOS Safari specifically.
+7. **CSS changes** must be tested at all three breakpoints: desktop, ≤768px, and ≤480px.
