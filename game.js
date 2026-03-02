@@ -495,7 +495,7 @@
             timerInterval = setInterval(() => {
               if (time > 0) {
                 time--;
-                timeElement.textContent = time;
+                updateTimeUI();
               } else if (!endGameTriggered) {
                 clearInterval(timerInterval);
                 endGame(currentNickname);
