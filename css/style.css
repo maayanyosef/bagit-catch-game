@@ -528,3 +528,46 @@
         padding: 4px 8px;
       }
     }
+
+    /* Mobile tweaks: ensure top control buttons and difficulty stay usable on narrow portrait screens */
+    @media (max-width: 480px) {
+      /* Keep Stop and Pause buttons both visible by stacking them vertically */
+      #stopButton,
+      #pauseButton {
+        position: fixed;
+        left: 10px;
+        right: auto;
+        font-size: 12px;
+        padding: 5px 9px;
+        z-index: 110;
+      }
+      #stopButton {
+        top: 10px;
+      }
+      #pauseButton {
+        top: 40px;
+      }
+
+      /* Keep difficulty buttons on a single row */
+      #difficultySelector {
+        position: relative;
+        flex-wrap: nowrap;
+        justify-content: center;
+        max-width: 360px;
+      }
+      #difficultyLabel {
+        position: absolute;
+        top: -18px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 13px;
+        margin: 0;
+      }
+      .diffBtn {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 6px 8px;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+    }
