@@ -14,17 +14,17 @@ async function waitForGameReady(page) {
 
 test.describe('Bagit Catch Game – smoke tests', () => {
   test('loads game page without errors', async ({ page }) => {
+    // listen for console errors before any page interaction
+    const errors: string[] = [];
+    page.on('console', msg => {
+      if (msg.type() === 'error') errors.push(msg.text());
+    });
+
     await waitForGameReady(page);
 
     // basic DOM expectations
     await expect(page.locator('#gameCanvas')).toBeVisible();
     await expect(page.locator('#startButton')).toBeVisible();
-
-    // no obvious JS errors in console
-    const errors: string[] = [];
-    page.on('console', msg => {
-      if (msg.type() === 'error') errors.push(msg.text());
-    });
 
     // small interaction to trigger any lazy code
     await page.click('#startButton');
@@ -48,7 +48,7 @@ test.describe('Bagit Catch Game – smoke tests', () => {
     // perform a few key presses to move the player
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('ArrowLeft');
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(5000);
 
     // check that time is counting down and score element exists
     const timeText = await page.locator('#time').innerText();

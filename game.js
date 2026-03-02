@@ -22,7 +22,7 @@
     const jumpButton = document.getElementById('jumpButton');
     const gameControls = document.getElementById('gameControls');
     const orientationWarning = document.getElementById('orientationWarning');
-    const orientationDismissButton = document.getElementById('orientationDismiss');
+    const orientationDismissButton = document.getElementById('dismissOrientation');
     const pauseOverlay = document.getElementById('pauseOverlay');
     const comboDisplay = document.getElementById('comboDisplay');
     const powerupDisplay = document.getElementById('powerupDisplay');
@@ -182,7 +182,12 @@
       canvas.height = window.innerHeight;
       initClouds();
 
-      cat.initialY = canvas.height - 150;
+      // In portrait mode, position the cat higher to use vertical space better (#50)
+      if (canvas.height > canvas.width * 1.2) {
+        cat.initialY = canvas.height * 0.75;
+      } else {
+        cat.initialY = canvas.height - 150;
+      }
       if (!cat.isJumping) {
         cat.y = cat.initialY;
       }
@@ -213,8 +218,49 @@
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('orientationchange', resizeCanvas);
 
-    const catImg = new Image();
-    catImg.src = 'assets/github.png';
+    // Cat sprite is now drawn directly on canvas via drawCatSprite()
+
+    // Generate star reward image on canvas (replaces github-stars.png Octocat)
+    (function generateStarImage() {
+      var size = 200;
+      var offCanvas = document.createElement('canvas');
+      offCanvas.width = size;
+      offCanvas.height = size;
+      var offCtx = offCanvas.getContext('2d');
+      var cx = size / 2, cy = size / 2;
+
+      function drawStarPath(c, sx, sy, spikes, outerR, innerR) {
+        var rot = -Math.PI / 2;
+        var step = Math.PI / spikes;
+        c.beginPath();
+        for (var i = 0; i < spikes * 2; i++) {
+          var r = i % 2 === 0 ? outerR : innerR;
+          c.lineTo(sx + Math.cos(rot) * r, sy + Math.sin(rot) * r);
+          rot += step;
+        }
+        c.closePath();
+      }
+
+      // Outer star (gold border)
+      offCtx.fillStyle = '#FFD740';
+      drawStarPath(offCtx, cx, cy, 5, size * 0.48, size * 0.22);
+      offCtx.fill();
+      // Inner star (darker gold)
+      offCtx.fillStyle = '#DAA520';
+      drawStarPath(offCtx, cx, cy, 5, size * 0.38, size * 0.17);
+      offCtx.fill();
+      // Sparkle highlights
+      offCtx.fillStyle = '#FFF8DC';
+      offCtx.beginPath();
+      offCtx.arc(cx - 15, cy - 10, 8, 0, Math.PI * 2);
+      offCtx.fill();
+      offCtx.globalAlpha = 0.6;
+      offCtx.beginPath();
+      offCtx.arc(cx - 8, cy - 18, 4, 0, Math.PI * 2);
+      offCtx.fill();
+
+      try { starImage.src = offCanvas.toDataURL(); } catch (e) { /* no-op in test env */ }
+    })();
 
     /**********************************************
      * 3) Helper for Both Touch & Click
@@ -445,7 +491,7 @@
       gameControls.style.display = 'none';
       leaderboard.style.display = 'none';
       stopButton.style.display = 'block';
-      scoreboard.style.display = 'block';
+      scoreboard.style.display = 'flex';
       if (pauseButton) pauseButton.style.display = 'block';
 
       if (isMobile) mobileControls.style.display = 'flex';
@@ -488,9 +534,17 @@
 
         ctx.save();
         if (count > 0) {
-          ctx.font = `bold ${fontSize}px Arial`;
+          // "Get Ready!" label above the number
+          ctx.font = `bold ${fontSize * 0.32}px Arial`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.shadowColor = 'rgba(0,0,0,0.5)';
+          ctx.shadowBlur = 10;
+          ctx.fillText('Get Ready!', canvas.width / 2, canvas.height / 2 - fontSize * 0.65);
+
+          // Countdown number
+          ctx.font = `bold ${fontSize}px Arial`;
           ctx.fillStyle = 'rgba(255, 87, 34, 0.92)';
           ctx.shadowColor = 'rgba(0,0,0,0.4)';
           ctx.shadowBlur = 20;
@@ -862,6 +916,153 @@
       ctx.restore();
     }
 
+    function drawCatSprite(x, y, w, h) {
+      // Canvas-drawn cat matching the game's orange/blue art style
+      ctx.save();
+      ctx.translate(x, y);
+
+      const scaleX = w / 120; // reference width 120
+      const scaleY = h / 90;  // reference height 90
+      ctx.scale(scaleX, scaleY);
+
+      // Tail (curved, behind body)
+      ctx.strokeStyle = '#F28C28';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(15, 55);
+      ctx.quadraticCurveTo(-8, 30, 5, 15);
+      ctx.stroke();
+
+      // Body (orange rounded ellipse)
+      ctx.fillStyle = '#F28C28';
+      ctx.beginPath();
+      ctx.ellipse(60, 55, 42, 30, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Body outline
+      ctx.strokeStyle = '#D2691E';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Head (orange circle)
+      ctx.fillStyle = '#F28C28';
+      ctx.beginPath();
+      ctx.arc(60, 28, 24, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#D2691E';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Left ear (outer orange)
+      ctx.fillStyle = '#F28C28';
+      ctx.beginPath();
+      ctx.moveTo(42, 12);
+      ctx.lineTo(34, -4);
+      ctx.lineTo(52, 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      // Left ear (inner pink)
+      ctx.fillStyle = '#FFB6C1';
+      ctx.beginPath();
+      ctx.moveTo(44, 10);
+      ctx.lineTo(38, 1);
+      ctx.lineTo(50, 9);
+      ctx.closePath();
+      ctx.fill();
+
+      // Right ear (outer orange)
+      ctx.fillStyle = '#F28C28';
+      ctx.beginPath();
+      ctx.moveTo(78, 12);
+      ctx.lineTo(86, -4);
+      ctx.lineTo(68, 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#D2691E';
+      ctx.stroke();
+      // Right ear (inner pink)
+      ctx.fillStyle = '#FFB6C1';
+      ctx.beginPath();
+      ctx.moveTo(76, 10);
+      ctx.lineTo(82, 1);
+      ctx.lineTo(70, 9);
+      ctx.closePath();
+      ctx.fill();
+
+      // Eyes (blue with white highlight)
+      // Left eye
+      ctx.fillStyle = '#2196F3';
+      ctx.beginPath();
+      ctx.ellipse(51, 26, 5, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Left eye highlight
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(49, 24, 2, 0, Math.PI * 2);
+      ctx.fill();
+      // Right eye
+      ctx.fillStyle = '#2196F3';
+      ctx.beginPath();
+      ctx.ellipse(69, 26, 5, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Right eye highlight
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(67, 24, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Nose (small pink triangle)
+      ctx.fillStyle = '#FF7088';
+      ctx.beginPath();
+      ctx.moveTo(60, 32);
+      ctx.lineTo(57, 29);
+      ctx.lineTo(63, 29);
+      ctx.closePath();
+      ctx.fill();
+
+      // Mouth
+      ctx.strokeStyle = '#D2691E';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(60, 32);
+      ctx.quadraticCurveTo(55, 37, 52, 35);
+      ctx.moveTo(60, 32);
+      ctx.quadraticCurveTo(65, 37, 68, 35);
+      ctx.stroke();
+
+      // Whiskers (3 per side)
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 1;
+      // Left whiskers
+      ctx.beginPath();
+      ctx.moveTo(44, 28); ctx.lineTo(22, 24);
+      ctx.moveTo(44, 31); ctx.lineTo(20, 31);
+      ctx.moveTo(44, 34); ctx.lineTo(22, 38);
+      ctx.stroke();
+      // Right whiskers
+      ctx.beginPath();
+      ctx.moveTo(76, 28); ctx.lineTo(98, 24);
+      ctx.moveTo(76, 31); ctx.lineTo(100, 31);
+      ctx.moveTo(76, 34); ctx.lineTo(98, 38);
+      ctx.stroke();
+
+      // Front legs (two small ovals)
+      ctx.fillStyle = '#F28C28';
+      ctx.beginPath();
+      ctx.ellipse(44, 80, 8, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#D2691E';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(76, 80, 8, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
     function drawCat() {
       // Draw magnet aura if active
       if (activePowerups['magnet']) {
@@ -874,14 +1075,13 @@
         ctx.restore();
       }
       if (activePowerups['speed']) {
-        // Speed trail
+        // Speed trail — draw a faded cat offset to the left
         ctx.save();
         ctx.globalAlpha = 0.15;
-        ctx.fillStyle = '#FFD700';
-        ctx.drawImage(catImg, cat.x - 10, cat.y, cat.width, cat.height);
+        drawCatSprite(cat.x - 10, cat.y, cat.width, cat.height);
         ctx.restore();
       }
-      ctx.drawImage(catImg, cat.x, cat.y, cat.width, cat.height);
+      drawCatSprite(cat.x, cat.y, cat.width, cat.height);
       if (activePowerups['shield']) {
         ctx.save();
         ctx.globalAlpha = 0.35 + 0.2 * Math.sin(Date.now() / 150);
@@ -1187,7 +1387,7 @@
     }
 
     function showLeaderboard() {
-      leaderboard.innerHTML = '<p style="text-align: center;">Loading leaderboard...</p>';
+      leaderboard.innerHTML = '<div style="text-align:center"><div class="loading-spinner"></div><p>Loading leaderboard...</p></div>';
       leaderboard.style.display = 'block';
       fetch('https://script.google.com/macros/s/AKfycbw9dyf_wJn2KFMGSV8VeslPCZHUSLufYdhXM1bPKlhik7hcjgTicKykdLFsB9qTDsxmQw/exec')
         .then(r => r.json())

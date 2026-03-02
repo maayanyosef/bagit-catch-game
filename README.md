@@ -1,5 +1,9 @@
 # Bagit Catch Game
 
+[![GitHub Pages](https://img.shields.io/github/deployments/maayanyosef/bagit-catch-game/github-pages?label=Live%20Game&logo=github)](https://bagit.explorium.ninja)
+[![E2E Tests](https://github.com/maayanyosef/bagit-catch-game/actions/workflows/e2e-playwright.yml/badge.svg)](https://github.com/maayanyosef/bagit-catch-game/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ![Bagit](https://emoji.slack-edge.com/T8UPK0YQ3/bagit/130f01dbd0e3f77d.gif)
 
 ## Description
