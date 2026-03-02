@@ -206,7 +206,7 @@
     window.addEventListener('orientationchange', resizeCanvas);
 
     const catImg = new Image();
-    catImg.src = 'https://bagit.explorium.ninja/assets/github.png';
+    catImg.src = 'assets/github.png';
 
     /**********************************************
      * 3) Helper for Both Touch & Click
