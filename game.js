@@ -167,6 +167,14 @@
     let lastTapTime = 0;
     const DOUBLE_TAP_THRESHOLD = 300; // ms
 
+    // Touch gesture recognition — distinguish tap (jump) from drag (move)
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let isTouchDragging = false;
+    const TAP_DISTANCE_THRESHOLD = 15;  // px — beyond this it's a drag
+    const TAP_TIME_THRESHOLD = 250;     // ms — beyond this it's not a tap
+
     // Adjust cat size for small screens
     if (window.innerWidth <= 480) {
       cat.width = 80;
@@ -300,7 +308,16 @@
     canvas.addEventListener('click', jump);
     canvas.addEventListener('touchstart', function (e) {
       e.preventDefault();
-      handleTap();
+      var touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      touchStartTime = Date.now();
+      isTouchDragging = false;
+      // Snap cat to finger position immediately so drag feels instant
+      if (isMobile && gameControls.style.display === 'none' && !isPaused) {
+        cat.x = touch.clientX - cat.width / 2;
+        cat.x = Math.max(0, Math.min(cat.x, canvas.width - cat.width));
+      }
     }, { passive: false });
 
     document.addEventListener('keydown', function (event) {
@@ -343,11 +360,26 @@
       // On the start/end screen gameControls is display:none — let touches work normally there.
       if (isMobile && gameControls.style.display === 'none') {
         event.preventDefault(); // always block browser scroll/pan during gameplay
-        const touch = event.touches[0];
+        var touch = event.touches[0];
+        var dx = touch.clientX - touchStartX;
+        var dy = touch.clientY - touchStartY;
+        if (!isTouchDragging && (Math.abs(dx) > TAP_DISTANCE_THRESHOLD || Math.abs(dy) > TAP_DISTANCE_THRESHOLD)) {
+          isTouchDragging = true;
+        }
         cat.x = touch.clientX - cat.width / 2;
         cat.x = Math.max(0, Math.min(cat.x, canvas.width - cat.width));
       }
     }, { passive: false });
+
+    document.addEventListener('touchend', function (event) {
+      // A tap = short stationary touch. Only fire jump if finger didn't drag.
+      if (isMobile && gameControls.style.display === 'none') {
+        var elapsed = Date.now() - touchStartTime;
+        if (!isTouchDragging && elapsed < TAP_TIME_THRESHOLD) {
+          handleTap();
+        }
+      }
+    });
 
     // Pause button (mobile)
     const pauseButton = document.getElementById('pauseButton');
@@ -1163,6 +1195,11 @@
       const speedYAdjust = canvas.height > 800 ? 1.2 : 1;
       baguette.dataset.speedY = Math.min(diff.speedBase * speedYAdjust * difficultyBoost, diff.speedMax);
       baguette.dataset.speedX = speedX;
+      // Cache dimensions to avoid getComputedStyle/getBoundingClientRect in the game loop
+      var bW = (isMobile && canvas.width <= 480) ? 30 : 50;
+      var bH = bW * 2;
+      baguette.dataset.bWidth = bW;
+      baguette.dataset.bHeight = bH;
       baguettes.push(baguette);
     }
 
@@ -1180,7 +1217,7 @@
         baguette.style.top = top + 'px';
         baguette.style.left = left + 'px';
 
-        const baguetteWidth = parseFloat(getComputedStyle(baguette).width);
+        const baguetteWidth = parseFloat(baguette.dataset.bWidth) || 50;
         if (left < 0 || left > canvas.width - baguetteWidth) {
           baguette.dataset.speedX = -speedX;
         }
@@ -1191,8 +1228,13 @@
       // Iterate in reverse so splice doesn't skip elements
       for (let index = baguettes.length - 1; index >= 0; index--) {
         const baguette = baguettes[index];
-        const baguetteRect = baguette.getBoundingClientRect();
-        const catRect = {
+        // Build rect from JS-tracked positions to avoid forced layout (getBoundingClientRect)
+        var bLeft = parseFloat(baguette.style.left);
+        var bTop = parseFloat(baguette.style.top);
+        var bW = parseFloat(baguette.dataset.bWidth) || 50;
+        var bH = parseFloat(baguette.dataset.bHeight) || 100;
+        var baguetteRect = { left: bLeft, top: bTop, right: bLeft + bW, bottom: bTop + bH };
+        var catRect = {
           left: cat.x,
           top: cat.y,
           right: cat.x + cat.width,

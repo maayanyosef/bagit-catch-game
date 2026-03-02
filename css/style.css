@@ -14,6 +14,7 @@
       background: #FFFFFF;
       font-family: Arial, sans-serif;
       touch-action: manipulation;
+      overscroll-behavior: none;
       position: fixed;
       width: 100%;
       height: 100%;
@@ -33,6 +34,8 @@
     canvas {
       display: block;
       touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
     #scoreboard {
       position: absolute;
@@ -50,6 +53,8 @@
       z-index: 100;
       box-shadow: 0 3px 10px rgba(0,0,0,0.25);
       border: 1px solid rgba(0,0,0,0.18);
+      -webkit-user-select: none;
+      user-select: none;
     }
     #scoreboard .time-low {
       color: #d32f2f;
